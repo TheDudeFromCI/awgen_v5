@@ -1,0 +1,13 @@
+[package]
+name = "awgen"
+description = "The Awgen game engine and runtime."
+version = "0.1.0"
+edition = "2021"
+authors = ["TheDudeFromCI <thedudefromci@gmail.com>"]
+
+[dependencies]
+bevy = "0.14"
+clap = { version = "4", features = ["derive"] }
+
+[features]
+editor = []

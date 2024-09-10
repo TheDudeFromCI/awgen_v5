@@ -1,0 +1,15 @@
+version = "Two"
+unstable_features = true
+
+comment_width = 80
+wrap_comments = true
+
+imports_layout = "HorizontalVertical"
+reorder_imports = true
+reorder_modules = true
+imports_granularity = "Module"
+group_imports = "StdExternalCrate"
+
+spaces_around_ranges = true
+match_arm_leading_pipes = "Preserve"
+match_arm_blocks = true
