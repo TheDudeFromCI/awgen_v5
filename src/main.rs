@@ -10,26 +10,20 @@ struct Args {
     #[arg(long)]
     debug: bool,
 
-    /// Enable development mode
-    #[arg(long)]
-    dev: bool,
-
     /// The project workspace to open. If not provided, the current directory is
     /// used.
     #[arg(long)]
     project: Option<String>,
 }
 
+/// Whether the engine is running in development mode.
+pub const DEV_MODE: bool = cfg!(feature = "editor");
+
 fn main() {
     let args = Args::parse();
 
-    #[cfg(feature = "editor")]
-    let dev = args.dev;
-    #[cfg(not(feature = "editor"))]
-    let dev = false;
-
     let name = "Unnamed Game";
-    let title = match (dev, args.debug) {
+    let title = match (DEV_MODE, args.debug) {
         (true, true) => format!("Awgen Editor [{}] (debug)", name),
         (true, false) => format!("Awgen Editor [{}]", name),
         (false, true) => format!("{} (debug)", name),
