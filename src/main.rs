@@ -43,6 +43,14 @@ pub const PROJECT_VERSION_KEY: &str = "VERSION";
 fn main() {
     let args = Args::parse();
 
+    println!("Awgen Engine v{}", env!("CARGO_PKG_VERSION"));
+
+    if DEV_MODE {
+        println!("Running in development mode.");
+    } else {
+        println!("Running in player mode.");
+    }
+
     let Ok(cwd) = std::env::current_dir() else {
         eprintln!("Failed to get current directory.");
         std::process::exit(1);
@@ -52,6 +60,8 @@ fn main() {
         Some(path) => path.into(),
         None => cwd,
     };
+
+    println!("Opening project at: {}", project_folder.display());
 
     let settings = match ProjectSettings::new(project_folder, DEV_MODE) {
         Ok(settings) => settings,
@@ -79,6 +89,9 @@ fn main() {
         }
     };
 
+    println!("Project name: {}", proj_name);
+    println!("Project version: {}", proj_version);
+
     let title = match (DEV_MODE, args.debug) {
         (true, true) => format!("Awgen Editor [{} - {}] (debug)", proj_name, proj_version),
         (true, false) => format!("Awgen Editor [{} - {}]", proj_name, proj_version),
@@ -86,6 +99,7 @@ fn main() {
         (false, false) => format!("{} - {}", proj_name, proj_version),
     };
 
+    println!("Debug enabled: {}", args.debug);
     let log_level = if args.debug {
         bevy::log::Level::DEBUG
     } else {

@@ -14,3 +14,7 @@ thiserror = "1"
 
 [features]
 editor = []
+
+[profile.release]
+strip = true
+lto = true
