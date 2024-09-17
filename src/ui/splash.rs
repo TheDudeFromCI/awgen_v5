@@ -5,7 +5,7 @@ use bevy::prelude::*;
 use super::menu::MainMenuState;
 
 /// The asset path to the Wraithaven Games splash screen icon.
-const WHG_SPLASH_ICON: &str = "splash/whg.png";
+const WHG_SPLASH_ICON: &str = "awgen/splash/whg.png";
 
 /// The maximum size of the splash screen icon.
 const SPLASH_MAX_SIZE: f32 = 1024.0;

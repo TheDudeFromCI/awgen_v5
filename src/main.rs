@@ -11,9 +11,12 @@ use clap::Parser;
 use settings::ProjectSettings;
 
 mod camera;
+mod map;
 mod settings;
 mod ui;
+mod utilities;
 
+/// The command line arguments definition for the engine.
 #[derive(Debug, Parser)]
 #[command(version, about)]
 struct Args {
@@ -60,6 +63,8 @@ fn main() {
         Some(path) => path.into(),
         None => cwd,
     };
+
+    let asset_folder = format!("{}/assets", project_folder.display());
 
     println!("Opening project at: {}", project_folder.display());
 
@@ -113,6 +118,7 @@ fn main() {
     };
 
     App::new()
+        .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(settings)
         .add_plugins(
             DefaultPlugins
@@ -127,9 +133,14 @@ fn main() {
                 .set(LogPlugin {
                     level: log_level,
                     ..default()
+                })
+                .set(AssetPlugin {
+                    file_path: asset_folder,
+                    ..default()
                 }),
         )
         .add_plugins(camera::CameraPlugin)
         .add_plugins(ui::menu::MainMenuPlugin)
+        .add_plugins(map::VoxelWorldPlugin)
         .run();
 }

@@ -7,9 +7,15 @@
     "**/.DS_Store": true,
     "**/Thumbs.db": true,
     "target": true,
-    "Cargo.lock": true,
+    "Cargo.lock": true
   },
   "cSpell.words": [
-    "Awgen"
+    "Aabb",
+    "Awgen",
+    "Gltf",
+    "overworld",
+    "tileset",
+    "tilesets",
+    "tinyvec"
   ]
 }
