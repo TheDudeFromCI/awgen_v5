@@ -1,6 +1,8 @@
 //! This module handles the implementation of the voxel world logic and
 //! rendering.
 
+use std::f32::consts::PI;
+
 use bevy::prelude::*;
 use blocks::model::{BlockFace, BlockModel, BlockShape, RenderedBlock};
 use blocks::{Block, Tileset};
@@ -35,6 +37,7 @@ impl Plugin for VoxelWorldPlugin {
 /// Sets up the voxel world.
 fn setup(
     asset_server: Res<AssetServer>,
+    mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut commands: Commands,
 ) {
@@ -47,12 +50,19 @@ fn setup(
         }),
     ));
 
-    commands.spawn(PointLightBundle {
-        point_light: PointLight {
+    commands.spawn(DirectionalLightBundle {
+        directional_light: DirectionalLight {
             shadows_enabled: true,
             ..default()
         },
-        transform: Transform::from_xyz(4.0, 8.0, 4.0),
+        transform: Transform::from_rotation(Quat::from_euler(EulerRot::XYZ, -1.0, -0.8, 0.0)),
+        ..default()
+    });
+
+    commands.spawn(PbrBundle {
+        mesh: meshes.add(Circle::new(4.0)),
+        material: materials.add(Color::WHITE),
+        transform: Transform::from_rotation(Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2)),
         ..default()
     });
 

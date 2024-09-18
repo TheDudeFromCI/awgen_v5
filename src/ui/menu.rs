@@ -26,8 +26,19 @@ pub enum MainMenuState {
     /// The splash screen state.
     Splash,
 
-    /// The project editor menu.
+    /// The project editor.
     Editor,
+
+    /// The in-game player.
+    Player,
+}
+
+impl MainMenuState {
+    /// A runtime condition that returns true if the game is in a playable
+    /// state. (Editor or Player)
+    pub fn is_in_game(state: Res<State<MainMenuState>>) -> bool {
+        matches!(**state, MainMenuState::Editor | MainMenuState::Player)
+    }
 }
 
 /// This system runs on startup to transition to the splash screen.
