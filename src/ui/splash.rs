@@ -1,11 +1,12 @@
 //! This module contains the implementation of the splash screen UI plugin.
 
+use bevy::asset::embedded_asset;
 use bevy::prelude::*;
 
 use super::menu::MainMenuState;
 
 /// The asset path to the Wraithaven Games splash screen icon.
-const WHG_SPLASH_ICON: &str = "awgen/splash/whg.png";
+const WHG_SPLASH_ICON: &str = "embedded://awgen/ui/whg.png";
 
 /// The maximum size of the splash screen icon.
 const SPLASH_MAX_SIZE: f32 = 1024.0;
@@ -20,6 +21,8 @@ impl Plugin for SplashPlugin {
                 Update,
                 update_splash.run_if(in_state(MainMenuState::Splash)),
             );
+
+        embedded_asset!(app_, "whg.png");
     }
 }
 

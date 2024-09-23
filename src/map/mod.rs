@@ -6,7 +6,7 @@ use blocks::model::{BlockFace, BlockModel, BlockShape, RenderedBlock};
 use blocks::Block;
 use chunk::ChunkData;
 use pos::{BlockPos, ChunkPos, Position, CHUNK_SIZE};
-use tileset::{TilesetBundle, TilesetMaterial};
+use tileset::{TilesetBundle, TilesetMaterial, TilesetPlugin};
 use world::{VoxelWorld, VoxelWorldCommands};
 
 use crate::ui::menu::MainMenuState;
@@ -21,7 +21,7 @@ pub mod world;
 pub struct VoxelWorldPlugin;
 impl Plugin for VoxelWorldPlugin {
     fn build(&self, app_: &mut App) {
-        app_.add_plugins(MaterialPlugin::<TilesetMaterial>::default())
+        app_.add_plugins(TilesetPlugin)
             .add_systems(OnEnter(MainMenuState::Editor), setup)
             .add_systems(
                 Update,
@@ -31,8 +31,7 @@ impl Plugin for VoxelWorldPlugin {
                     blocks::model::update_rendered_block_model,
                 )
                     .chain(),
-            )
-            .add_systems(Update, tileset::finish_loading_tilesets);
+            );
     }
 }
 

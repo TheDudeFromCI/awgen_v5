@@ -1,6 +1,6 @@
 //! This module implements tileset loading and management.
 
-use bevy::asset::LoadState;
+use bevy::asset::{embedded_asset, LoadState};
 use bevy::pbr::{MaterialPipeline, MaterialPipelineKey};
 use bevy::prelude::*;
 use bevy::render::mesh::{MeshVertexAttribute, MeshVertexBufferLayoutRef};
@@ -17,11 +17,22 @@ use bevy::render::texture::ImageSampler;
 pub const TILESET_LENGTH: usize = 256;
 
 /// The path to the tileset shader.
-pub const SHADER_PATH: &str = "awgen/shaders/tileset.wgsl";
+pub const SHADER_PATH: &str = "embedded://awgen/map/tileset.wgsl";
 
 /// The tile index attribute used by the tileset shader.
 pub const ATTRIBUTE_TILE_INDEX: MeshVertexAttribute =
     MeshVertexAttribute::new("TileIndex", 710310471, VertexFormat::Uint32);
+
+/// The plugin responsible for managing tilesets.
+pub struct TilesetPlugin;
+impl Plugin for TilesetPlugin {
+    fn build(&self, app_: &mut App) {
+        app_.add_plugins(MaterialPlugin::<TilesetMaterial>::default())
+            .add_systems(Update, finish_loading_tilesets);
+
+        embedded_asset!(app_, "tileset.wgsl");
+    }
+}
 
 /// This component is added to a tileset to indicate it's current load state.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash, Component)]
