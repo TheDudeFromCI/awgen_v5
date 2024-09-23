@@ -114,7 +114,11 @@ fn update_splash(
         image.color = Color::srgba(1.0, 1.0, 1.0, alpha);
 
         if seconds >= INIT_TIME + FADE_TIME + HOLD_TIME + FADE_TIME + END_TIME {
-            next_state.set(MainMenuState::Editor);
+            if crate::DEV_MODE {
+                next_state.set(MainMenuState::Editor);
+            } else {
+                next_state.set(MainMenuState::Player);
+            }
         }
     }
 }
