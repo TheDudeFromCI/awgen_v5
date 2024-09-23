@@ -5,8 +5,8 @@ use serde::{Deserialize, Serialize};
 use tinyvec::TinyVec;
 
 use super::occlusion::{OccludedBy, Occludes};
-use super::Tileset;
 use crate::map::pos::FaceDirection;
+use crate::map::tileset::{Tileset, TilesetMaterial};
 use crate::utilities::meshbuf::MeshBuf;
 
 /// The maximum number of vertices to store on the stack in a [`BlockMesh`].
@@ -27,7 +27,7 @@ pub enum BlockModel {
     /// static chunk meshes.
     Primitive {
         /// The material of the block.
-        material: Handle<StandardMaterial>,
+        material: Handle<TilesetMaterial>,
 
         /// The mesh of the block.
         mesh: Box<BlockMesh>,
@@ -84,7 +84,7 @@ pub enum BlockShape {
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct BlockFace {
     /// The index of the texture within the texture atlas.
-    pub tile_index: u8,
+    pub tile_index: u32,
 
     /// The rotation of the texture.
     pub rotation: FaceRotation,
@@ -126,7 +126,7 @@ pub struct BlockVertex {
     pub uv: Vec2,
 
     /// The layer of the vertex.
-    pub layer: u8,
+    pub layer: u32,
 }
 
 /// The mesh of a primitive block model.
@@ -176,7 +176,7 @@ pub struct BlockMesh {
 /// The quad, before transformation, is a unit square with the bottom-left
 /// corner at `(-0.5, -0.5, 0.0)` and the top-right corner at `(0.5, 0.5, 0.0)`.
 /// The quad is facing `+Z`.
-fn quad(rot: Quat, translate: Vec3, scale: Vec3) -> [BlockVertex; 4] {
+fn quad(rot: Quat, translate: Vec3, scale: Vec3, layer: u32) -> [BlockVertex; 4] {
     let mut vertices = [BlockVertex::default(); 4];
 
     vertices[0].position = rot * (Vec3::new(-0.5, -0.5, 0.0) * scale) + translate;
@@ -193,6 +193,11 @@ fn quad(rot: Quat, translate: Vec3, scale: Vec3) -> [BlockVertex; 4] {
     vertices[1].uv = Vec2::new(1.0, 0.0);
     vertices[2].uv = Vec2::new(1.0, 1.0);
     vertices[3].uv = Vec2::new(0.0, 1.0);
+
+    vertices[0].layer = layer;
+    vertices[1].layer = layer;
+    vertices[2].layer = layer;
+    vertices[3].layer = layer;
 
     vertices
 }
@@ -253,6 +258,7 @@ impl BlockMeshPart {
             mesh.positions.push(vertex.position.into());
             mesh.normals.push(vertex.normal.into());
             mesh.uvs.push(vertex.uv.into());
+            mesh.layers.push(vertex.layer as u32);
         }
 
         for index in self.indices.iter() {
@@ -372,16 +378,10 @@ pub struct RenderedBlock {
 pub fn update_rendered_block_model(
     mut meshes: ResMut<Assets<Mesh>>,
     models: Query<&BlockModel>,
-    mut rendered: Query<
-        (
-            &RenderedBlock,
-            &mut Handle<StandardMaterial>,
-            &mut Handle<Mesh>,
-        ),
-        Changed<RenderedBlock>,
-    >,
+    mut rendered: Query<(Entity, &RenderedBlock), Changed<RenderedBlock>>,
+    mut commands: Commands,
 ) {
-    for (block, mut material, mut mesh) in rendered.iter_mut() {
+    for (entity, block) in rendered.iter_mut() {
         let Ok(model) = models.get(block.block) else {
             warn!("Tried to update model for RenderedBlock, but the block entity does not exist.");
             continue;
@@ -389,8 +389,11 @@ pub fn update_rendered_block_model(
 
         match model {
             BlockModel::None => {
-                *material = Default::default();
-                *mesh = Default::default();
+                commands
+                    .entity(entity)
+                    .remove::<Handle<StandardMaterial>>()
+                    .remove::<Handle<TilesetMaterial>>()
+                    .remove::<Handle<Mesh>>();
             }
             BlockModel::Primitive {
                 material: block_mat,
@@ -400,15 +403,19 @@ pub fn update_rendered_block_model(
                 block_mesh.append_to(OccludedBy::empty(), &mut mesh_buf);
                 let bevy_mesh: Mesh = mesh_buf.into();
 
-                *material = block_mat.clone();
-                *mesh = meshes.add(bevy_mesh);
+                commands
+                    .entity(entity)
+                    .remove::<Handle<StandardMaterial>>()
+                    .insert((block_mat.clone(), meshes.add(bevy_mesh)));
             }
             BlockModel::Custom {
-                material: mat,
-                mesh: mesh_,
+                material: block_mat,
+                mesh: block_mesh,
             } => {
-                *material = mat.clone();
-                *mesh = mesh_.clone();
+                commands
+                    .entity(entity)
+                    .remove::<Handle<TilesetMaterial>>()
+                    .insert((block_mat.clone(), block_mesh.clone()));
             }
         }
     }
@@ -434,7 +441,7 @@ pub fn forward_model_changes_to_rendered(
 /// accordingly.
 pub fn update_block_model(
     asset_server: Res<AssetServer>,
-    chunk_materials: Query<(&Handle<StandardMaterial>, &Name), With<Tileset>>,
+    chunk_materials: Query<(&Handle<TilesetMaterial>, &Name), With<Tileset>>,
     mut models: Query<(&mut BlockModel, &BlockShape, &Name), Changed<BlockShape>>,
 ) {
     for (mut model, shape, name) in models.iter_mut() {
@@ -472,6 +479,7 @@ pub fn update_block_model(
                     FaceDirection::Up.rotation_quat(),
                     Vec3::new(0.0, 0.5, 0.0) + Vec3::splat(0.5),
                     Vec3::ONE,
+                    top.tile_index,
                 );
                 update_uv(&mut top_quad, top);
                 mesh.top = Some(top_quad.into());
@@ -480,6 +488,7 @@ pub fn update_block_model(
                     FaceDirection::Down.rotation_quat(),
                     Vec3::new(0.0, -0.5, 0.0) + Vec3::splat(0.5),
                     Vec3::ONE,
+                    bottom.tile_index,
                 );
                 update_uv(&mut bottom_quad, bottom);
                 mesh.bottom = Some(bottom_quad.into());
@@ -488,6 +497,7 @@ pub fn update_block_model(
                     FaceDirection::North.rotation_quat(),
                     Vec3::new(0.0, 0.0, -0.5) + Vec3::splat(0.5),
                     Vec3::ONE,
+                    north.tile_index,
                 );
                 update_uv(&mut north_quad, north);
                 mesh.north = Some(north_quad.into());
@@ -496,6 +506,7 @@ pub fn update_block_model(
                     FaceDirection::South.rotation_quat(),
                     Vec3::new(0.0, 0.0, 0.5) + Vec3::splat(0.5),
                     Vec3::ONE,
+                    south.tile_index,
                 );
                 update_uv(&mut south_quad, south);
                 mesh.south = Some(south_quad.into());
@@ -504,6 +515,7 @@ pub fn update_block_model(
                     FaceDirection::East.rotation_quat(),
                     Vec3::new(0.5, 0.0, 0.0) + Vec3::splat(0.5),
                     Vec3::ONE,
+                    east.tile_index,
                 );
                 update_uv(&mut east_quad, east);
                 mesh.east = Some(east_quad.into());
@@ -512,6 +524,7 @@ pub fn update_block_model(
                     FaceDirection::West.rotation_quat(),
                     Vec3::new(-0.5, 0.0, 0.0) + Vec3::splat(0.5),
                     Vec3::ONE,
+                    west.tile_index,
                 );
                 update_uv(&mut west_quad, west);
                 mesh.west = Some(west_quad.into());

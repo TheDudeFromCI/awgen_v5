@@ -5,6 +5,8 @@ use bevy::prelude::{Mesh, ResMut};
 use bevy::render::mesh::{Indices, PrimitiveTopology};
 use bevy::render::render_asset::RenderAssetUsages;
 
+use crate::map::tileset::ATTRIBUTE_TILE_INDEX;
+
 /// A temporary buffer for storing mesh data.
 #[derive(Debug, Default, Clone)]
 pub struct MeshBuf {
@@ -16,6 +18,12 @@ pub struct MeshBuf {
 
     /// The normals of the mesh.
     pub normals: Vec<[f32; 3]>,
+
+    /// The layer UVs of the mesh. (Optional)
+    ///
+    /// If this is empty, the mesh will not have any layers. If this is not
+    /// empty, the [`ATTRIBUTE_TILE_INDEX`] attribute will be added to the mesh.
+    pub layers: Vec<u32>,
 
     /// The indices of the mesh.
     pub indices: Vec<u32>,
@@ -34,6 +42,7 @@ impl MeshBuf {
             positions: Vec::with_capacity(Self::INIT_CAPACITY_VERTS),
             uvs: Vec::with_capacity(Self::INIT_CAPACITY_VERTS),
             normals: Vec::with_capacity(Self::INIT_CAPACITY_VERTS),
+            layers: Vec::with_capacity(Self::INIT_CAPACITY_VERTS),
             indices: Vec::with_capacity(Self::INIT_CAPACITY_INDICES),
         }
     }
@@ -58,6 +67,11 @@ impl MeshBuf {
         &self.normals
     }
 
+    /// Gets a reference to the layer UVs of the mesh.
+    pub fn layers(&self) -> &[u32] {
+        &self.layers
+    }
+
     /// Gets the number of triangles in the mesh.
     pub fn tri_count(&self) -> usize {
         self.indices.len() / 3
@@ -79,13 +93,19 @@ impl From<MeshBuf> for Mesh {
             Indices::U16(value.indices.iter().map(|&i| i as u16).collect())
         };
 
-        Mesh::new(
+        let mut mesh = Mesh::new(
             PrimitiveTopology::TriangleList,
             RenderAssetUsages::default(),
         )
         .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, value.positions)
         .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, value.normals)
-        .with_inserted_attribute(Mesh::ATTRIBUTE_UV_0, value.uvs)
-        .with_inserted_indices(indices)
+        .with_inserted_attribute(Mesh::ATTRIBUTE_UV_0, value.uvs);
+
+        if !value.layers.is_empty() {
+            mesh = mesh.with_inserted_attribute(ATTRIBUTE_TILE_INDEX, value.layers);
+        }
+
+        mesh = mesh.with_inserted_indices(indices);
+        mesh
     }
 }

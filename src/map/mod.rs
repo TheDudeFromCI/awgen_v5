@@ -1,13 +1,12 @@
 //! This module handles the implementation of the voxel world logic and
 //! rendering.
 
-use std::f32::consts::PI;
-
 use bevy::prelude::*;
 use blocks::model::{BlockFace, BlockModel, BlockShape, RenderedBlock};
-use blocks::{Block, Tileset};
+use blocks::Block;
 use chunk::ChunkData;
 use pos::{BlockPos, ChunkPos, Position, CHUNK_SIZE};
+use tileset::{TilesetBundle, TilesetMaterial};
 use world::{VoxelWorld, VoxelWorldCommands};
 
 use crate::ui::menu::MainMenuState;
@@ -15,13 +14,15 @@ use crate::ui::menu::MainMenuState;
 pub mod blocks;
 pub mod chunk;
 pub mod pos;
+pub mod tileset;
 pub mod world;
 
 /// The plugin responsible for managing the voxel world.
 pub struct VoxelWorldPlugin;
 impl Plugin for VoxelWorldPlugin {
     fn build(&self, app_: &mut App) {
-        app_.add_systems(OnEnter(MainMenuState::Editor), setup)
+        app_.add_plugins(MaterialPlugin::<TilesetMaterial>::default())
+            .add_systems(OnEnter(MainMenuState::Editor), setup)
             .add_systems(
                 Update,
                 (
@@ -30,7 +31,8 @@ impl Plugin for VoxelWorldPlugin {
                     blocks::model::update_rendered_block_model,
                 )
                     .chain(),
-            );
+            )
+            .add_systems(Update, tileset::finish_loading_tilesets);
     }
 }
 
@@ -38,17 +40,16 @@ impl Plugin for VoxelWorldPlugin {
 fn setup(
     asset_server: Res<AssetServer>,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut standard_mats: ResMut<Assets<StandardMaterial>>,
+    mut tileset_mats: ResMut<Assets<TilesetMaterial>>,
     mut commands: Commands,
 ) {
-    commands.spawn((
-        Tileset,
-        Name::new("overworld"),
-        materials.add(StandardMaterial {
-            base_color_texture: Some(asset_server.load("tilesets/overworld.png")),
-            ..default()
-        }),
-    ));
+    commands.spawn(TilesetBundle {
+        name: Name::new("overworld"),
+        image: asset_server.load("tilesets/overworld.png"),
+        material: tileset_mats.add(TilesetMaterial::default()),
+        ..default()
+    });
 
     commands.spawn(DirectionalLightBundle {
         directional_light: DirectionalLight {
@@ -61,7 +62,7 @@ fn setup(
 
     commands.spawn(PbrBundle {
         mesh: meshes.add(Circle::new(4.0)),
-        material: materials.add(Color::WHITE),
+        material: standard_mats.add(Color::WHITE),
         transform: Transform::from_rotation(Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2)),
         ..default()
     });
@@ -129,5 +130,5 @@ fn setup(
         chunk_data,
     );
 
-    commands.spawn((RenderedBlock { block: grass }, PbrBundle::default()));
+    commands.spawn((RenderedBlock { block: grass }, SpatialBundle::default()));
 }
