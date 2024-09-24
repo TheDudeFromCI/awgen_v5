@@ -5,16 +5,6 @@ echo "Preparing build directories."
 # Remove old build (if exists)
 rm -rf ./build
 
-# Copy editor assets
-mkdir -p ./build/editor/assets
-cp -r ./assets/editor ./build/editor/assets/editor
-cp -r ./assets/common ./build/editor/assets/common
-
-# Copy player assets
-mkdir -p ./build/player/assets
-cp -r ./assets/player ./build/player/assets/player
-cp -r ./assets/common ./build/player/assets/common
-
 # Build Editor for linux
 echo "Building Awgen Editor: Linux"
 cargo build --features editor --release --target x86_64-unknown-linux-gnu
