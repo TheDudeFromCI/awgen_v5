@@ -13,6 +13,7 @@ use settings::ProjectSettings;
 mod camera;
 mod map;
 mod settings;
+mod tileset;
 mod ui;
 mod utilities;
 
@@ -142,5 +143,6 @@ fn main() {
         .add_plugins(camera::CameraPlugin)
         .add_plugins(ui::menu::MainMenuPlugin)
         .add_plugins(map::VoxelWorldPlugin)
+        .add_plugins(tileset::TilesetPlugin)
         .run();
 }

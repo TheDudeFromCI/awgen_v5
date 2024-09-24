@@ -5,7 +5,7 @@ use bevy::prelude::{Mesh, ResMut};
 use bevy::render::mesh::{Indices, PrimitiveTopology};
 use bevy::render::render_asset::RenderAssetUsages;
 
-use crate::map::tileset::ATTRIBUTE_TILE_INDEX;
+use crate::tileset::ATTRIBUTE_TILE_INDEX;
 
 /// A temporary buffer for storing mesh data.
 #[derive(Debug, Default, Clone)]

@@ -6,7 +6,7 @@ use tinyvec::TinyVec;
 
 use super::occlusion::{OccludedBy, Occludes};
 use crate::map::pos::FaceDirection;
-use crate::map::tileset::{Tileset, TilesetMaterial};
+use crate::tileset::{Tileset, TilesetMaterial};
 use crate::utilities::meshbuf::MeshBuf;
 
 /// The maximum number of vertices to store on the stack in a [`BlockMesh`].

@@ -6,23 +6,21 @@ use blocks::model::{BlockFace, BlockModel, BlockShape, RenderedBlock};
 use blocks::Block;
 use chunk::ChunkData;
 use pos::{BlockPos, ChunkPos, Position, CHUNK_SIZE};
-use tileset::{TilesetBundle, TilesetMaterial, TilesetPlugin};
 use world::{VoxelWorld, VoxelWorldCommands};
 
+use crate::tileset::{TilesetBundle, TilesetMaterial};
 use crate::ui::menu::MainMenuState;
 
 pub mod blocks;
 pub mod chunk;
 pub mod pos;
-pub mod tileset;
 pub mod world;
 
 /// The plugin responsible for managing the voxel world.
 pub struct VoxelWorldPlugin;
 impl Plugin for VoxelWorldPlugin {
     fn build(&self, app_: &mut App) {
-        app_.add_plugins(TilesetPlugin)
-            .add_systems(OnEnter(MainMenuState::Editor), setup)
+        app_.add_systems(OnEnter(MainMenuState::Editor), setup)
             .add_systems(
                 Update,
                 (
