@@ -5,6 +5,7 @@ use bevy::utils::HashMap;
 
 use super::chunk::ChunkData;
 use super::pos::{ChunkPos, Position, CHUNK_SIZE};
+use super::remesh::{NeedsRemesh, UniqueBlocks};
 
 /// An infinite, 3D grid of voxels, represented by chunks, that make up a world.
 #[derive(Debug, Default, Component)]
@@ -73,6 +74,8 @@ impl<'w, 's> VoxelWorldCommands for Commands<'w, 's> {
                 .spawn((
                     pos.clone(),
                     data,
+                    UniqueBlocks::default(),
+                    NeedsRemesh,
                     SpatialBundle {
                         transform: Transform::from_xyz(
                             pos.block.x as f32 * CHUNK_SIZE as f32,

@@ -2,7 +2,7 @@
 //! rendering.
 
 use bevy::prelude::*;
-use blocks::model::{BlockFace, BlockModel, BlockShape, RenderedBlock};
+use blocks::model::{BlockFace, BlockModel, BlockShape};
 use blocks::Block;
 use chunk::ChunkData;
 use pos::{BlockPos, ChunkPos, Position, CHUNK_SIZE};
@@ -14,14 +14,15 @@ use crate::ui::menu::MainMenuState;
 pub mod blocks;
 pub mod chunk;
 pub mod pos;
-// pub mod remesh;
+pub mod remesh;
 pub mod world;
 
 /// The plugin responsible for managing the voxel world.
 pub struct VoxelWorldPlugin;
 impl Plugin for VoxelWorldPlugin {
     fn build(&self, app_: &mut App) {
-        app_.add_systems(OnEnter(MainMenuState::Editor), setup)
+        app_.add_plugins(remesh::ChunkRemeshPlugin)
+            .add_systems(OnEnter(MainMenuState::Editor), setup)
             .add_systems(
                 Update,
                 (
@@ -37,7 +38,6 @@ impl Plugin for VoxelWorldPlugin {
 /// Sets up the voxel world.
 fn setup(
     asset_server: Res<AssetServer>,
-    mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut commands: Commands,
 ) {
@@ -58,13 +58,6 @@ fn setup(
             ..default()
         },
         transform: Transform::from_rotation(Quat::from_euler(EulerRot::XYZ, -1.0, -0.8, 0.0)),
-        ..default()
-    });
-
-    commands.spawn(PbrBundle {
-        mesh: meshes.add(Circle::new(4.0)),
-        material: materials.add(Color::WHITE),
-        transform: Transform::from_rotation(Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2)),
         ..default()
     });
 
@@ -130,6 +123,4 @@ fn setup(
         },
         chunk_data,
     );
-
-    commands.spawn((RenderedBlock { block: grass }, PbrBundle::default()));
 }

@@ -1,6 +1,7 @@
 //! This module implements the [`VoxelChunk`] component and associated logic.
 
 use bevy::prelude::*;
+use itertools::Itertools;
 
 use super::pos::{BlockPos, TOTAL_BLOCKS};
 
@@ -84,6 +85,15 @@ impl ChunkData {
         match self {
             Self::Single { block } => *block,
             Self::Multiple { blocks } => blocks[index],
+        }
+    }
+
+    /// Returns an iterate over all unique blocks in this data container. All
+    /// duplicate block entities are removed.
+    pub fn iter(&self) -> Box<dyn Iterator<Item = Entity> + '_> {
+        match self {
+            Self::Single { block } => Box::new(std::iter::once(*block)),
+            Self::Multiple { blocks } => Box::new(blocks.iter().sorted().dedup().copied()),
         }
     }
 }

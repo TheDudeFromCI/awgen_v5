@@ -88,7 +88,7 @@ impl BlockPos {
     /// is outside of the chunk, this function returns `None`.
     #[inline(always)]
     pub fn index_no_wrap(self) -> Option<usize> {
-        if !self.is_in_bounds(ChunkPos::from(self)) {
+        if !self.is_in_bounds(ChunkPos::new(0, 0, 0)) {
             return None;
         }
 
@@ -103,11 +103,13 @@ impl BlockPos {
             y: chunk.y << CHUNK_BITS,
             z: chunk.z << CHUNK_BITS,
         };
+
         let max = BlockPos {
             x: min.x + CHUNK_SIZE as i32,
             y: min.y + CHUNK_SIZE as i32,
             z: min.z + CHUNK_SIZE as i32,
         };
+
         self.x >= min.x
             && self.x < max.x
             && self.y >= min.y
@@ -126,6 +128,12 @@ impl BlockPos {
             y: self.y + offset.y,
             z: self.z + offset.z,
         }
+    }
+
+    /// Returns the block position as a `Vec3`.
+    #[inline(always)]
+    pub fn as_vec3(self) -> Vec3 {
+        Vec3::new(self.x as f32, self.y as f32, self.z as f32)
     }
 }
 
