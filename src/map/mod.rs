@@ -8,12 +8,13 @@ use chunk::ChunkData;
 use pos::{BlockPos, ChunkPos, Position, CHUNK_SIZE};
 use world::{VoxelWorld, VoxelWorldCommands};
 
-use crate::tileset::{TilesetBundle, TilesetMaterial};
+use crate::tileset::{TilePos, TilesetBundle};
 use crate::ui::menu::MainMenuState;
 
 pub mod blocks;
 pub mod chunk;
 pub mod pos;
+// pub mod remesh;
 pub mod world;
 
 /// The plugin responsible for managing the voxel world.
@@ -37,14 +38,17 @@ impl Plugin for VoxelWorldPlugin {
 fn setup(
     asset_server: Res<AssetServer>,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut standard_mats: ResMut<Assets<StandardMaterial>>,
-    mut tileset_mats: ResMut<Assets<TilesetMaterial>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
     mut commands: Commands,
 ) {
+    let tileset_image = asset_server.load("tilesets/overworld.png");
     commands.spawn(TilesetBundle {
         name: Name::new("overworld"),
-        image: asset_server.load("tilesets/overworld.png"),
-        material: tileset_mats.add(TilesetMaterial::default()),
+        image: tileset_image.clone(),
+        material: materials.add(StandardMaterial {
+            base_color_texture: Some(tileset_image),
+            ..default()
+        }),
         ..default()
     });
 
@@ -59,7 +63,7 @@ fn setup(
 
     commands.spawn(PbrBundle {
         mesh: meshes.add(Circle::new(4.0)),
-        material: standard_mats.add(Color::WHITE),
+        material: materials.add(Color::WHITE),
         transform: Transform::from_rotation(Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2)),
         ..default()
     });
@@ -81,27 +85,27 @@ fn setup(
             BlockShape::Cube {
                 tileset: "overworld".to_string(),
                 top: BlockFace {
-                    tile_index: 0,
+                    tile: TilePos::new(0, 0),
                     ..default()
                 },
                 bottom: BlockFace {
-                    tile_index: 0,
+                    tile: TilePos::new(0, 0),
                     ..default()
                 },
                 north: BlockFace {
-                    tile_index: 0,
+                    tile: TilePos::new(0, 0),
                     ..default()
                 },
                 south: BlockFace {
-                    tile_index: 0,
+                    tile: TilePos::new(0, 0),
                     ..default()
                 },
                 east: BlockFace {
-                    tile_index: 0,
+                    tile: TilePos::new(0, 0),
                     ..default()
                 },
                 west: BlockFace {
-                    tile_index: 0,
+                    tile: TilePos::new(0, 0),
                     ..default()
                 },
             },
@@ -127,5 +131,5 @@ fn setup(
         chunk_data,
     );
 
-    commands.spawn((RenderedBlock { block: grass }, SpatialBundle::default()));
+    commands.spawn((RenderedBlock { block: grass }, PbrBundle::default()));
 }
