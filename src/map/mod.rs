@@ -14,6 +14,7 @@ use crate::ui::menu::MainMenuState;
 
 pub mod blocks;
 pub mod chunk;
+pub mod editor;
 pub mod remesh;
 pub mod world;
 
@@ -21,9 +22,13 @@ pub mod world;
 pub struct VoxelWorldPlugin;
 impl Plugin for VoxelWorldPlugin {
     fn build(&self, app_: &mut App) {
-        app_.add_plugins((remesh::ChunkRemeshPlugin, blocks::BlocksPlugin))
-            .init_resource::<VoxelWorld>()
-            .add_systems(OnEnter(MainMenuState::Editor), setup);
+        app_.add_plugins((
+            remesh::ChunkRemeshPlugin,
+            blocks::BlocksPlugin,
+            editor::MapEditorPlugin,
+        ))
+        .init_resource::<VoxelWorld>()
+        .add_systems(OnEnter(MainMenuState::Editor), setup);
     }
 }
 

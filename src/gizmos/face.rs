@@ -3,12 +3,10 @@
 
 use std::f32::consts::TAU;
 
-use bevy::math::bounding::RayCast3d;
 use bevy::pbr::{NotShadowCaster, NotShadowReceiver};
 use bevy::prelude::*;
 
-use crate::camera::MainCamera;
-use crate::utilities::raycast::VoxelRaycast;
+use super::cursor::CursorRaycast;
 
 /// The asset path to the Wraithaven Games splash screen icon.
 pub const GIZMO_FACE_MODEL: &str = "embedded://awgen/gizmos/block_face.glb";
@@ -24,32 +22,14 @@ pub struct BlockFaceGizmoInner;
 /// This system updates the position of the block face gizmo to match the cursor
 /// target.
 pub fn update_block_face_gizmo(
-    raycast: VoxelRaycast,
-    camera: Query<(&Camera, &GlobalTransform), With<MainCamera>>,
-    window: Query<&Window>,
+    cursor: Res<CursorRaycast>,
     mut gizmo: Query<(&mut Transform, &mut Visibility), With<BlockFaceGizmo>>,
 ) {
     let Ok((mut transform, mut visibility)) = gizmo.get_single_mut() else {
         return;
     };
 
-    let Ok((camera, cam_transform)) = camera.get_single() else {
-        return;
-    };
-
-    let Ok(window) = window.get_single() else {
-        return;
-    };
-
-    let Some(mouse_pos) = window.cursor_position() else {
-        return;
-    };
-
-    let Some(ray) = camera.viewport_to_world(cam_transform, mouse_pos) else {
-        return;
-    };
-
-    let Some(hit) = raycast.raycast(RayCast3d::new(ray.origin, ray.direction, 1000.0)) else {
+    let Some(hit) = &cursor.block else {
         *visibility = Visibility::Hidden;
         return;
     };

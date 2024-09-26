@@ -189,10 +189,15 @@ fn smooth_camera_lerp(
 fn mouse_pan(
     mut mouse_motion: EventReader<MouseMotion>,
     mouse_button: Res<ButtonInput<MouseButton>>,
+    keycode_button: Res<ButtonInput<KeyCode>>,
     main_cam: Query<(&Camera, &Projection), With<MainCamera>>,
     mut cam_target: Query<(&mut Transform, &CameraTarget, &CameraControls)>,
 ) {
-    if !mouse_button.pressed(MouseButton::Right) {
+    if !mouse_button.pressed(MouseButton::Middle) {
+        return;
+    }
+
+    if keycode_button.pressed(KeyCode::AltLeft) {
         return;
     }
 
@@ -219,10 +224,15 @@ fn mouse_pan(
 /// is pressed.
 fn mouse_rotate(
     mut mouse_motion: EventReader<MouseMotion>,
-    button: Res<ButtonInput<MouseButton>>,
+    mouse_button: Res<ButtonInput<MouseButton>>,
+    keycode_button: Res<ButtonInput<KeyCode>>,
     mut cam_target: Query<(&mut CameraTarget, &CameraControls)>,
 ) {
-    if !button.pressed(MouseButton::Middle) {
+    if !mouse_button.pressed(MouseButton::Middle) {
+        return;
+    }
+
+    if !keycode_button.pressed(KeyCode::AltLeft) {
         return;
     }
 
