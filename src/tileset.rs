@@ -70,11 +70,6 @@ impl TilePos {
         self.y
     }
 
-    /// Returns the index of the tile in the texture atlas.
-    pub fn index(self) -> usize {
-        self.y as usize * TILESET_LENGTH + self.x as usize
-    }
-
     /// Transforms a UV coordinate in the range of [0, 1] to the UV coordinate
     /// of the tile in the texture atlas.
     pub fn transform_uv(self, uv: Vec2) -> Vec2 {

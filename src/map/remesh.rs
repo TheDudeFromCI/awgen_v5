@@ -5,11 +5,12 @@ use std::cmp::Ordering;
 use bevy::prelude::*;
 use bevy::utils::{HashMap, HashSet, Parallel};
 
-use super::blocks::model::{BlockModel, BlockShape};
+use super::blocks::model::BlockModel;
 use super::blocks::occlusion::BlockDataOccludedBy;
+use super::blocks::shape::BlockShape;
 use super::blocks::Block;
 use super::chunk::ChunkData;
-use crate::map::pos::BlockPos;
+use crate::math::BlockPos;
 use crate::utilities::chunk_iter::ChunkIterator;
 use crate::utilities::meshbuf::MeshBuf;
 

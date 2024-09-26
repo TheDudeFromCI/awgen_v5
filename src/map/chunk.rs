@@ -3,7 +3,7 @@
 use bevy::prelude::*;
 use itertools::Itertools;
 
-use super::pos::{BlockPos, TOTAL_BLOCKS};
+use crate::math::{BlockPos, TOTAL_BLOCKS};
 
 /// The data of the blocks within a chunk. This is stored as an enum to allow
 /// for data compression when all blocks in the chunk are the same type.

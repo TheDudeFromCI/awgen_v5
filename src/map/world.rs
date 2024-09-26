@@ -4,8 +4,8 @@ use bevy::prelude::*;
 use bevy::utils::HashMap;
 
 use super::chunk::ChunkData;
-use super::pos::{ChunkPos, Position, CHUNK_SIZE};
 use super::remesh::{NeedsRemesh, UniqueBlocks};
+use crate::math::{ChunkPos, Position, CHUNK_SIZE};
 
 /// An infinite, 3D grid of voxels, represented by chunks, that make up a world.
 #[derive(Debug, Default, Component)]

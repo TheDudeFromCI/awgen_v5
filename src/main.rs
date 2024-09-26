@@ -12,6 +12,7 @@ use settings::ProjectSettings;
 
 mod camera;
 mod map;
+mod math;
 mod settings;
 mod tileset;
 mod ui;

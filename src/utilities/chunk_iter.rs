@@ -1,6 +1,6 @@
 //! This module implements an iterator over all block positions within a chunk.
 
-use crate::map::pos::{BlockPos, CHUNK_SIZE};
+use crate::math::{BlockPos, CHUNK_SIZE};
 
 /// The size of a chunk in blocks. (as an i32)
 const SIZE: i32 = CHUNK_SIZE as i32;

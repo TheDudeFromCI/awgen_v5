@@ -2,18 +2,18 @@
 //! rendering.
 
 use bevy::prelude::*;
-use blocks::model::{BlockFace, BlockModel, BlockShape};
+use blocks::model::BlockModel;
+use blocks::shape::{BlockFace, BlockShape};
 use blocks::Block;
 use chunk::ChunkData;
-use pos::{BlockPos, ChunkPos, Position, CHUNK_SIZE};
 use world::{VoxelWorld, VoxelWorldCommands};
 
+use crate::math::{BlockPos, ChunkPos, Position, CHUNK_SIZE};
 use crate::tileset::{TilePos, TilesetBundle};
 use crate::ui::menu::MainMenuState;
 
 pub mod blocks;
 pub mod chunk;
-pub mod pos;
 pub mod remesh;
 pub mod world;
 
@@ -21,17 +21,8 @@ pub mod world;
 pub struct VoxelWorldPlugin;
 impl Plugin for VoxelWorldPlugin {
     fn build(&self, app_: &mut App) {
-        app_.add_plugins(remesh::ChunkRemeshPlugin)
-            .add_systems(OnEnter(MainMenuState::Editor), setup)
-            .add_systems(
-                Update,
-                (
-                    blocks::model::update_block_model,
-                    blocks::model::forward_model_changes_to_rendered,
-                    blocks::model::update_rendered_block_model,
-                )
-                    .chain(),
-            );
+        app_.add_plugins((remesh::ChunkRemeshPlugin, blocks::BlocksPlugin))
+            .add_systems(OnEnter(MainMenuState::Editor), setup);
     }
 }
 

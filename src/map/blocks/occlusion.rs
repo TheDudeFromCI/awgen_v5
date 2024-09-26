@@ -3,9 +3,9 @@
 use bevy::prelude::*;
 use bitflags::bitflags;
 
-use super::model::BlockShape;
+use super::shape::BlockShape;
 use crate::map::chunk::ChunkData;
-use crate::map::pos::{BlockPos, FaceDirection, TOTAL_BLOCKS};
+use crate::math::{BlockPos, FaceDirection, TOTAL_BLOCKS};
 use crate::utilities::chunk_iter::ChunkIterator;
 
 bitflags! {
