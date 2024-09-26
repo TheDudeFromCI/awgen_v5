@@ -55,6 +55,7 @@ impl<'w, 's> VoxelWorldCommands for Commands<'w, 's> {
                 };
 
                 *chunk = data;
+                debug!("Updated chunk at {pos} with new data");
                 return;
             }
 
@@ -77,6 +78,8 @@ impl<'w, 's> VoxelWorldCommands for Commands<'w, 's> {
 
             let mut world = app.get_resource_mut::<VoxelWorld>().unwrap();
             world.chunks.insert(pos, chunk_id);
+
+            info!("Spawned new chunk at {pos}");
         });
     }
 
@@ -89,6 +92,8 @@ impl<'w, 's> VoxelWorldCommands for Commands<'w, 's> {
 
                 let mut world = app.get_resource_mut::<VoxelWorld>().unwrap();
                 world.chunks.remove(&pos);
+
+                info!("Despawned chunk at {pos}");
             }
         });
     }
@@ -103,6 +108,8 @@ impl<'w, 's> VoxelWorldCommands for Commands<'w, 's> {
             for (_, chunk_id) in chunks.iter() {
                 app.entity_mut(*chunk_id).despawn_recursive();
             }
+
+            info!("Despawned all chunks");
         });
     }
 }

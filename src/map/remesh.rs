@@ -249,8 +249,6 @@ pub fn build_models(
     let occlusion = BlockDataOccludedBy::from_block_data(data, block_shapes);
     let mut meshes: HashMap<Handle<StandardMaterial>, MeshBuf> = HashMap::new();
 
-    info!("Occlusion: {:?}", occlusion.get(BlockPos::new(5, 0, 0)));
-
     for pos in ChunkIterator::default() {
         let block = data.get(pos);
         let Ok(model) = block_models.get(block) else {
