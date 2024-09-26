@@ -31,7 +31,8 @@ impl Plugin for CameraPlugin {
         app_.add_systems(PreStartup, setup_camera)
             .add_systems(
                 Update,
-                (mouse_pan, mouse_rotate, mouse_zoom).in_set(CameraSystemSets::Controls),
+                (mouse_pan, mouse_rotate, mouse_zoom, keyboard_rotate)
+                    .in_set(CameraSystemSets::Controls),
             )
             .add_systems(
                 Update,
@@ -255,4 +256,34 @@ fn mouse_zoom(
     delta *= target_props.zoom_sensitivity;
 
     target_pos.scale.x = (target_pos.scale.x * 1.25f32.powf(-delta)).clamp(MIN_ZOOM, MAX_ZOOM);
+}
+
+/// This system listens for keyboard inputs and rotates the camera accordingly.
+fn keyboard_rotate(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut cam_target: Query<&mut CameraTarget>,
+) {
+    let mut target = cam_target.single_mut();
+    let mut angle = 45.0;
+
+    if keyboard_input.pressed(KeyCode::ShiftLeft) {
+        angle *= 0.5;
+    }
+
+    let mut delta = 0;
+    if keyboard_input.just_pressed(KeyCode::KeyQ) {
+        delta -= 1;
+    }
+
+    if keyboard_input.just_pressed(KeyCode::KeyE) {
+        delta += 1;
+    }
+
+    if delta == 0 {
+        return;
+    }
+
+    target.rotation.x += delta as f32 * angle;
+    target.rotation.x = (target.rotation.x / angle).round() * angle;
+    target.rotation.x %= 360.0;
 }
