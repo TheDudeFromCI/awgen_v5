@@ -8,6 +8,8 @@ pub mod occlusion;
 pub mod shape;
 mod systems;
 
+/// This plugin adds functionality for working with various block types and
+/// their properties.
 pub struct BlocksPlugin;
 impl Plugin for BlocksPlugin {
     fn build(&self, app_: &mut App) {

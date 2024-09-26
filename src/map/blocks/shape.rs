@@ -1,3 +1,6 @@
+//! This module implements handling for defining block shapes that can be
+//! converted into models at runtime.
+
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
