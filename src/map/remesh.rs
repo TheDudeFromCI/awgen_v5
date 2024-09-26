@@ -10,7 +10,6 @@ use super::blocks::occlusion::BlockDataOccludedBy;
 use super::blocks::shape::BlockShape;
 use super::blocks::Block;
 use super::chunk::ChunkData;
-use crate::math::BlockPos;
 use crate::utilities::chunk_iter::ChunkIterator;
 use crate::utilities::meshbuf::MeshBuf;
 

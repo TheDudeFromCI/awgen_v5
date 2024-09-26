@@ -57,22 +57,6 @@ bitflags! {
     }
 }
 
-impl OccludedBy {
-    /// Returns an iterator over all directions that are included in this
-    /// occlusion data.
-    pub fn into_directions(self) -> impl Iterator<Item = FaceDirection> {
-        self.iter().map(|face| match face {
-            OccludedBy::Up => FaceDirection::Up,
-            OccludedBy::Down => FaceDirection::Down,
-            OccludedBy::North => FaceDirection::North,
-            OccludedBy::South => FaceDirection::South,
-            OccludedBy::East => FaceDirection::East,
-            OccludedBy::West => FaceDirection::West,
-            _ => unreachable!("Iterating over all flags individually"),
-        })
-    }
-}
-
 impl From<FaceDirection> for OccludedBy {
     fn from(face: FaceDirection) -> Self {
         match face {
@@ -83,91 +67,6 @@ impl From<FaceDirection> for OccludedBy {
             FaceDirection::East => OccludedBy::East,
             FaceDirection::West => OccludedBy::West,
         }
-    }
-}
-
-impl Occludes {
-    /// Returns an iterator over all directions that are included in this
-    /// occlusion data.
-    #[inline]
-    pub fn into_directions(self) -> impl Iterator<Item = FaceDirection> {
-        self.iter().map(|face| match face {
-            Occludes::Up => FaceDirection::Up,
-            Occludes::Down => FaceDirection::Down,
-            Occludes::North => FaceDirection::North,
-            Occludes::South => FaceDirection::South,
-            Occludes::East => FaceDirection::East,
-            Occludes::West => FaceDirection::West,
-            _ => unreachable!("Iterating over all flags individually"),
-        })
-    }
-
-    /// Returns the opposite occlusion data for this occlusion data.
-    ///
-    /// If this occlusion data occludes more than one direction, the opposite
-    /// occlusion data will occlude the opposite directions.
-    #[inline]
-    pub fn opposite(self) -> Self {
-        let mut opposite = Occludes::empty();
-
-        if self.contains(Occludes::Up) {
-            opposite |= Occludes::Down;
-        }
-
-        if self.contains(Occludes::Down) {
-            opposite |= Occludes::Up;
-        }
-
-        if self.contains(Occludes::North) {
-            opposite |= Occludes::South;
-        }
-
-        if self.contains(Occludes::South) {
-            opposite |= Occludes::North;
-        }
-
-        if self.contains(Occludes::East) {
-            opposite |= Occludes::West;
-        }
-
-        if self.contains(Occludes::West) {
-            opposite |= Occludes::East;
-        }
-
-        opposite
-    }
-
-    /// Converts this [`Occludes`] data into [`OccludedBy`] data, mapping the
-    /// occlusion data to the corresponding faces.
-    #[inline]
-    pub fn into_occluded_by(self) -> OccludedBy {
-        let mut occluded_by = OccludedBy::empty();
-
-        if self.contains(Occludes::Up) {
-            occluded_by |= OccludedBy::Up;
-        }
-
-        if self.contains(Occludes::Down) {
-            occluded_by |= OccludedBy::Down;
-        }
-
-        if self.contains(Occludes::North) {
-            occluded_by |= OccludedBy::North;
-        }
-
-        if self.contains(Occludes::South) {
-            occluded_by |= OccludedBy::South;
-        }
-
-        if self.contains(Occludes::East) {
-            occluded_by |= OccludedBy::East;
-        }
-
-        if self.contains(Occludes::West) {
-            occluded_by |= OccludedBy::West;
-        }
-
-        occluded_by
     }
 }
 
@@ -334,16 +233,6 @@ impl BlockDataOccludes {
         };
 
         self.data[index]
-    }
-
-    /// Sets the occlusion data for the block at the given position. If the
-    /// block is outside the chunk bounds, this function does nothing.
-    pub fn set(&mut self, pos: BlockPos, occludes: Occludes) {
-        let Some(index) = pos.index_no_wrap() else {
-            return;
-        };
-
-        self.data[index] = occludes;
     }
 }
 

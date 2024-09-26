@@ -58,18 +58,6 @@ impl TilePos {
         Self { x, y }
     }
 
-    /// Gets the x-coordinate of the tile in the atlas. This value is in the
-    /// range of [0, `TILE_COUNT`).
-    pub fn x(&self) -> u8 {
-        self.x
-    }
-
-    /// Gets the y-coordinate of the tile in the atlas. This value is in the
-    /// range of [0, `TILE_COUNT`).
-    pub fn y(&self) -> u8 {
-        self.y
-    }
-
     /// Transforms a UV coordinate in the range of [0, 1] to the UV coordinate
     /// of the tile in the texture atlas.
     pub fn transform_uv(self, uv: Vec2) -> Vec2 {
