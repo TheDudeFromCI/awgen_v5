@@ -14,8 +14,8 @@ use crate::math::{BlockPos, ChunkPos, FaceDirection};
 /// grid.
 #[derive(SystemParam)]
 pub struct VoxelRaycast<'w, 's> {
-    /// The query for voxel world entities.
-    worlds: Query<'w, 's, &'static VoxelWorld>,
+    /// The world resource that contains the chunk entity pointers.
+    world: Res<'w, VoxelWorld>,
 
     /// The query for chunk data components.
     chunks: Query<'w, 's, &'static ChunkData>,
@@ -27,11 +27,7 @@ pub struct VoxelRaycast<'w, 's> {
 impl<'w, 's> VoxelRaycast<'w, 's> {
     /// Casts a ray into the voxel world and returns the first block that was
     /// hit, or `None` if no block was hit.
-    pub fn raycast(&self, world_id: Entity, raycast: RayCast3d) -> Option<VoxelRaycastHit> {
-        let Ok(world) = self.worlds.get(world_id) else {
-            return None;
-        };
-
+    pub fn raycast(&self, raycast: RayCast3d) -> Option<VoxelRaycastHit> {
         let mut chunk_pos: Option<ChunkPos> = None;
         let mut chunk_buf = None;
 
@@ -42,7 +38,7 @@ impl<'w, 's> VoxelRaycast<'w, 's> {
             if Some(block_pos.into()) != chunk_pos {
                 chunk_pos = Some(block_pos.into());
 
-                let Some(chunk_id) = world.get_chunk(block_pos.into()) else {
+                let Some(chunk_id) = self.world.get_chunk(block_pos.into()) else {
                     chunk_buf = None;
                     continue;
                 };
@@ -74,7 +70,6 @@ impl<'w, 's> VoxelRaycast<'w, 's> {
             let face = face.unwrap();
 
             return Some(VoxelRaycastHit {
-                world: world_id,
                 block: block_pos,
                 face,
                 distance: block_dist,
@@ -89,9 +84,6 @@ impl<'w, 's> VoxelRaycast<'w, 's> {
 /// Represents the result of a voxel raycast.
 #[derive(Debug, Clone)]
 pub struct VoxelRaycastHit {
-    /// The entity of the world that was targeted.
-    pub world: Entity,
-
     /// The position of the block that was hit.
     pub block: BlockPos,
 

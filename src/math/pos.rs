@@ -47,9 +47,6 @@ pub struct ChunkPos {
 pub struct Position {
     /// The block position in the world.
     pub block: BlockPos,
-
-    /// The world the position is in.
-    pub world: Entity,
 }
 
 impl From<BlockPos> for ChunkPos {

@@ -8,7 +8,6 @@ use bevy::pbr::{NotShadowCaster, NotShadowReceiver};
 use bevy::prelude::*;
 
 use crate::camera::MainCamera;
-use crate::map::world::VoxelWorld;
 use crate::utilities::raycast::VoxelRaycast;
 
 /// The asset path to the Wraithaven Games splash screen icon.
@@ -28,7 +27,6 @@ pub fn update_block_face_gizmo(
     raycast: VoxelRaycast,
     camera: Query<(&Camera, &GlobalTransform), With<MainCamera>>,
     window: Query<&Window>,
-    worlds: Query<Entity, With<VoxelWorld>>,
     mut gizmo: Query<(&mut Transform, &mut Visibility), With<BlockFaceGizmo>>,
 ) {
     let Ok((mut transform, mut visibility)) = gizmo.get_single_mut() else {
@@ -51,12 +49,7 @@ pub fn update_block_face_gizmo(
         return;
     };
 
-    let Ok(world_id) = worlds.get_single() else {
-        return;
-    };
-
-    let Some(hit) = raycast.raycast(world_id, RayCast3d::new(ray.origin, ray.direction, 1000.0))
-    else {
+    let Some(hit) = raycast.raycast(RayCast3d::new(ray.origin, ray.direction, 1000.0)) else {
         *visibility = Visibility::Hidden;
         return;
     };

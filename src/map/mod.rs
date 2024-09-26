@@ -8,7 +8,7 @@ use blocks::Block;
 use chunk::ChunkData;
 use world::{VoxelWorld, VoxelWorldCommands};
 
-use crate::math::{BlockPos, ChunkPos, Position, CHUNK_SIZE};
+use crate::math::{BlockPos, ChunkPos, CHUNK_SIZE};
 use crate::tileset::{TilePos, TilesetBundle};
 use crate::ui::menu::MainMenuState;
 
@@ -22,6 +22,7 @@ pub struct VoxelWorldPlugin;
 impl Plugin for VoxelWorldPlugin {
     fn build(&self, app_: &mut App) {
         app_.add_plugins((remesh::ChunkRemeshPlugin, blocks::BlocksPlugin))
+            .init_resource::<VoxelWorld>()
             .add_systems(OnEnter(MainMenuState::Editor), setup);
     }
 }
@@ -96,10 +97,6 @@ fn setup(
         ))
         .id();
 
-    let world_id = commands
-        .spawn((VoxelWorld::default(), SpatialBundle::default()))
-        .id();
-
     let mut chunk_data = ChunkData::fill(air);
     for x in 0 .. CHUNK_SIZE {
         for z in 0 .. CHUNK_SIZE {
@@ -107,11 +104,5 @@ fn setup(
         }
     }
 
-    commands.spawn_chunk(
-        Position {
-            world: world_id,
-            block: ChunkPos::new(0, 0, 0).into(),
-        },
-        chunk_data,
-    );
+    commands.spawn_chunk(ChunkPos::new(0, 0, 0), chunk_data);
 }
