@@ -2,6 +2,7 @@
 
 use std::fmt;
 
+use bevy::math::Vec3A;
 use bevy::prelude::*;
 
 use super::FaceDirection;
@@ -77,6 +78,15 @@ impl BlockPos {
         Self { x, y, z }
     }
 
+    /// Creates a new block position from a [`Vec3`].
+    pub fn from_vec3(vec: Vec3) -> Self {
+        Self {
+            x: vec.x.floor() as i32,
+            y: vec.y.floor() as i32,
+            z: vec.z.floor() as i32,
+        }
+    }
+
     /// Returns the index of the block within it's local chunk.
     #[inline(always)]
     pub fn index(self) -> usize {
@@ -90,7 +100,14 @@ impl BlockPos {
     /// is outside of the chunk, this function returns `None`.
     #[inline(always)]
     pub fn index_no_wrap(self) -> Option<usize> {
-        if !self.is_in_bounds(ChunkPos::new(0, 0, 0)) {
+        if !self.is_in_bounds(
+            BlockPos::new(0, 0, 0),
+            BlockPos::new(
+                CHUNK_SIZE as i32 - 1,
+                CHUNK_SIZE as i32 - 1,
+                CHUNK_SIZE as i32 - 1,
+            ),
+        ) {
             return None;
         }
 
@@ -99,25 +116,13 @@ impl BlockPos {
 
     /// Checks if this block position is within the bounds of the given chunk.
     #[inline(always)]
-    pub fn is_in_bounds(self, chunk: ChunkPos) -> bool {
-        let min = BlockPos {
-            x: chunk.x << CHUNK_BITS,
-            y: chunk.y << CHUNK_BITS,
-            z: chunk.z << CHUNK_BITS,
-        };
-
-        let max = BlockPos {
-            x: min.x + CHUNK_SIZE as i32,
-            y: min.y + CHUNK_SIZE as i32,
-            z: min.z + CHUNK_SIZE as i32,
-        };
-
+    pub fn is_in_bounds(self, min: BlockPos, max: BlockPos) -> bool {
         self.x >= min.x
-            && self.x < max.x
+            && self.x <= max.x
             && self.y >= min.y
-            && self.y < max.y
+            && self.y <= max.y
             && self.z >= min.z
-            && self.z < max.z
+            && self.z <= max.z
     }
 
     /// Shift this block position in the given direction by the given number of
@@ -136,6 +141,12 @@ impl BlockPos {
     #[inline(always)]
     pub fn as_vec3(self) -> Vec3 {
         Vec3::new(self.x as f32, self.y as f32, self.z as f32)
+    }
+
+    /// Returns the block position as a `Vec3A`.
+    #[inline(always)]
+    pub fn as_vec3a(self) -> Vec3A {
+        Vec3A::new(self.x as f32, self.y as f32, self.z as f32)
     }
 }
 

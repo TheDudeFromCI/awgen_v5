@@ -2,6 +2,7 @@
 
 use bevy::prelude::*;
 
+pub mod mesh;
 pub mod model;
 pub mod occlusion;
 pub mod shape;

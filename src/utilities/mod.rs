@@ -3,4 +3,5 @@
 
 pub mod chunk_iter;
 pub mod meshbuf;
+pub mod raycast;
 pub mod vec_cmp;

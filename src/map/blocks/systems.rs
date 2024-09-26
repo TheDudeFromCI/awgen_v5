@@ -1,12 +1,15 @@
 //! The various systems used within the [`BlocksPlugin`].
 
+use bevy::math::bounding::Aabb3d;
+use bevy::math::Vec3A;
 use bevy::prelude::*;
 
-use super::model::{BlockModel, BlockVertex};
+use super::mesh::BlockVertex;
+use super::model::BlockModel;
 use super::occlusion::OccludedBy;
 use super::shape::{BlockFace, BlockShape};
 use super::RenderedBlock;
-use crate::map::blocks::model::BlockMesh;
+use crate::map::blocks::mesh::BlockMesh;
 use crate::math::{FaceDirection, FaceRotation};
 use crate::tileset::{TilePos, Tileset};
 use crate::utilities::meshbuf::MeshBuf;
@@ -40,6 +43,7 @@ pub fn update_rendered_block_model(
             BlockModel::Primitive {
                 material: block_mat,
                 mesh: block_mesh,
+                ..
             } => {
                 let mut mesh_buf = MeshBuf::new();
                 block_mesh.append_to(OccludedBy::empty(), &mut mesh_buf);
@@ -51,6 +55,7 @@ pub fn update_rendered_block_model(
             BlockModel::Custom {
                 material: block_mat,
                 mesh: block_mesh,
+                ..
             } => {
                 *mesh = block_mesh.clone();
                 *material = block_mat.clone();
@@ -167,9 +172,12 @@ pub fn update_block_model(
                 update_uv(&mut west_quad, west);
                 mesh.west = Some(west_quad.into());
 
+                let bounds = mesh.get_bounds();
+
                 *model = BlockModel::Primitive {
                     material,
                     mesh: Box::new(mesh),
+                    bounds,
                 };
             }
             BlockShape::Custom { asset } => {
@@ -182,6 +190,9 @@ pub fn update_block_model(
                         .from_asset(asset.clone()),
                     ),
                     mesh: asset_server.load(GltfAssetLabel::Mesh(0).from_asset(asset.clone())),
+
+                    // TODO: Update bounds when mesh loading is complete.
+                    bounds: Aabb3d::new(Vec3A::ZERO, Vec3A::ZERO),
                 };
             }
         }

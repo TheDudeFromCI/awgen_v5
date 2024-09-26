@@ -257,7 +257,7 @@ pub fn build_models(
             continue;
         };
 
-        let BlockModel::Primitive { material, mesh } = model else {
+        let BlockModel::Primitive { material, mesh, .. } = model else {
             continue;
         };
 
