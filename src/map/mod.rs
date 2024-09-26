@@ -44,6 +44,7 @@ fn setup(
         image: tileset_image.clone(),
         material: materials.add(StandardMaterial {
             base_color_texture: Some(tileset_image),
+            perceptual_roughness: 1.0,
             ..default()
         }),
         ..default()
