@@ -4,7 +4,7 @@ use bevy::prelude::*;
 
 use crate::gizmos::GizmoSystemSets;
 
-pub mod systems;
+pub mod placement;
 
 /// The map editor plugin. This plugin allows for the user to directly edit the
 /// world.
@@ -14,8 +14,8 @@ impl Plugin for MapEditorPlugin {
         app_.add_systems(
             Update,
             (
-                systems::place_block.in_set(MapEditorSystemSets::PlaceBlock),
-                systems::remove_block.in_set(MapEditorSystemSets::RemoveBlock),
+                placement::place_block.in_set(MapEditorSystemSets::PlaceBlock),
+                placement::remove_block.in_set(MapEditorSystemSets::RemoveBlock),
             ),
         )
         .configure_sets(

@@ -82,7 +82,7 @@ impl<'w, 's> VoxelRaycast<'w, 's> {
 }
 
 /// Represents the result of a voxel raycast.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct VoxelRaycastHit {
     /// The position of the block that was hit.
     pub block: BlockPos,
