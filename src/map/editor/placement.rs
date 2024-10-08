@@ -72,10 +72,10 @@ pub fn place_block(
         return;
     };
 
-    let grass_name: Name = "grass".into();
-    let Some(grass_id) = blocks
+    let block_name: Name = "debug".into();
+    let Some(block_id) = blocks
         .iter()
-        .find(|(_, name)| **name == grass_name)
+        .find(|(_, name)| **name == block_name)
         .map(|(entity, _)| entity)
     else {
         return;
@@ -94,7 +94,7 @@ pub fn place_block(
 
     let Some(chunk_id) = world.get_chunk(target_pos.into()) else {
         let mut new_chunk = ChunkData::fill(air_id);
-        new_chunk.set(target_pos, grass_id);
+        new_chunk.set(target_pos, block_id);
         commands.spawn_chunk(target_pos.into(), new_chunk);
         return;
     };
@@ -103,7 +103,7 @@ pub fn place_block(
         return;
     };
 
-    chunk.set(target_pos, grass_id);
+    chunk.set(target_pos, block_id);
     commands.entity(chunk_id).insert(NeedsRemesh);
 }
 

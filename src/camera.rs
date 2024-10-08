@@ -142,6 +142,7 @@ impl Default for CameraControls {
 fn setup_camera(mut commands: Commands) {
     commands.spawn((
         MainCamera,
+        IsDefaultUiCamera,
         Camera3dBundle {
             projection: OrthographicProjection {
                 near: -CAMERA_CLIP_DIST,

@@ -4,6 +4,8 @@ echo "Preparing build directories."
 
 # Remove old build (if exists)
 rm -rf ./build
+mkdir -p ./build/editor
+mkdir -p ./build/player
 
 # Build Editor for linux
 echo "Building Awgen Editor: Linux"

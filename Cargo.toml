@@ -21,4 +21,3 @@ editor = []
 
 [profile.release]
 strip = true
-lto = true

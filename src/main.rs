@@ -1,8 +1,10 @@
 #![doc = include_str!("../README.md")]
 #![warn(missing_docs)]
 #![warn(clippy::missing_docs_in_private_items)]
+#![windows_subsystem = "windows"]
 
 use std::path::PathBuf;
+use std::process::Termination;
 
 use bevy::log::LogPlugin;
 use bevy::prelude::*;
@@ -46,7 +48,7 @@ pub const PROJECT_NAME_KEY: &str = "NAME";
 /// The key used to store the project version in the settings file.
 pub const PROJECT_VERSION_KEY: &str = "VERSION";
 
-fn main() {
+fn main() -> impl Termination {
     let args = Args::parse();
 
     println!("Awgen Engine v{}", env!("CARGO_PKG_VERSION"));
@@ -143,8 +145,8 @@ fn main() {
                 }),
         )
         .add_plugins(camera::CameraPlugin)
-        .add_plugins(ui::menu::MainMenuPlugin)
+        .add_plugins(ui::AwgenUIPlugin)
         .add_plugins(map::VoxelWorldPlugin)
         .add_plugins(gizmos::GizmosPlugin)
-        .run();
+        .run()
 }

@@ -33,7 +33,8 @@ impl Plugin for VoxelWorldPlugin {
 }
 
 /// Sets up the voxel world.
-fn setup(
+pub fn setup(
+    mut ambient_light: ResMut<AmbientLight>,
     asset_server: Res<AssetServer>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut commands: Commands,
@@ -58,6 +59,7 @@ fn setup(
         transform: Transform::from_rotation(Quat::from_euler(EulerRot::XYZ, -1.0, -0.8, 0.0)),
         ..default()
     });
+    ambient_light.brightness = 1000.0;
 
     let air = commands
         .spawn((
@@ -102,6 +104,39 @@ fn setup(
             },
         ))
         .id();
+
+    commands.spawn((
+        Block,
+        Name::new("debug"),
+        BlockModel::default(),
+        BlockShape::Cube {
+            tileset: "overworld".to_string(),
+            top: BlockFace {
+                tile: TilePos::new(2, 1),
+                ..default()
+            },
+            bottom: BlockFace {
+                tile: TilePos::new(3, 1),
+                ..default()
+            },
+            north: BlockFace {
+                tile: TilePos::new(0, 1),
+                ..default()
+            },
+            south: BlockFace {
+                tile: TilePos::new(1, 1),
+                ..default()
+            },
+            east: BlockFace {
+                tile: TilePos::new(4, 1),
+                ..default()
+            },
+            west: BlockFace {
+                tile: TilePos::new(5, 1),
+                ..default()
+            },
+        },
+    ));
 
     let mut chunk_data = ChunkData::fill(air);
     for x in 0 .. CHUNK_SIZE {
