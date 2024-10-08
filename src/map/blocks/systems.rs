@@ -217,10 +217,10 @@ fn quad(rot: Quat, translate: Vec3, scale: Vec3, tile: TilePos) -> [BlockVertex;
     vertices[2].normal = rot * Vec3::new(0.0, 0.0, 1.0);
     vertices[3].normal = rot * Vec3::new(0.0, 0.0, 1.0);
 
-    vertices[0].uv = Vec2::new(0.0, 0.0);
-    vertices[1].uv = Vec2::new(1.0, 0.0);
-    vertices[2].uv = Vec2::new(1.0, 1.0);
-    vertices[3].uv = Vec2::new(0.0, 1.0);
+    vertices[0].uv = Vec2::new(0.0, 1.0);
+    vertices[1].uv = Vec2::new(1.0, 1.0);
+    vertices[2].uv = Vec2::new(1.0, 0.0);
+    vertices[3].uv = Vec2::new(0.0, 0.0);
 
     vertices[0].tile = tile;
     vertices[1].tile = tile;
@@ -234,10 +234,10 @@ fn quad(rot: Quat, translate: Vec3, scale: Vec3, tile: TilePos) -> [BlockVertex;
 /// face.
 fn update_uv(quad: &mut [BlockVertex; 4], face: &BlockFace) {
     let uv = [
-        Vec2::new(0.0, 0.0),
-        Vec2::new(1.0, 0.0),
-        Vec2::new(1.0, 1.0),
         Vec2::new(0.0, 1.0),
+        Vec2::new(1.0, 1.0),
+        Vec2::new(1.0, 0.0),
+        Vec2::new(0.0, 0.0),
     ];
 
     let uv = if face.mirror_x {
