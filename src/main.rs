@@ -12,12 +12,13 @@ use bevy::window::WindowMode;
 use clap::Parser;
 use settings::ProjectSettings;
 
+mod blocks;
 mod camera;
 mod gizmos;
 mod map;
 mod math;
 mod settings;
-mod tileset;
+mod tools;
 mod ui;
 mod utilities;
 
@@ -144,9 +145,12 @@ fn main() -> impl Termination {
                     ..default()
                 }),
         )
-        .add_plugins(camera::CameraPlugin)
-        .add_plugins(ui::AwgenUIPlugin)
-        .add_plugins(map::VoxelWorldPlugin)
-        .add_plugins(gizmos::GizmosPlugin)
+        .add_plugins((
+            camera::CameraPlugin,
+            ui::AwgenUIPlugin,
+            blocks::BlocksPlugin,
+            map::VoxelWorldPlugin,
+            gizmos::GizmosPlugin,
+        ))
         .run()
 }

@@ -3,31 +3,34 @@
 use bevy::prelude::*;
 
 use crate::gizmos::GizmoSystemSets;
+use crate::ui::menu::MainMenuState;
 
 pub mod placement;
+pub mod startup;
 
 /// The map editor plugin. This plugin allows for the user to directly edit the
 /// world.
 pub struct MapEditorPlugin;
 impl Plugin for MapEditorPlugin {
     fn build(&self, app_: &mut App) {
-        app_.add_systems(
-            Update,
-            (
-                placement::place_block.in_set(MapEditorSystemSets::PlaceBlock),
-                placement::remove_block.in_set(MapEditorSystemSets::RemoveBlock),
-            ),
-        )
-        .configure_sets(
-            Update,
-            (
-                MapEditorSystemSets::RemoveBlock
-                    .after_ignore_deferred(GizmoSystemSets::UpdateCursor),
-                MapEditorSystemSets::PlaceBlock
-                    .after_ignore_deferred(GizmoSystemSets::UpdateCursor)
-                    .after_ignore_deferred(MapEditorSystemSets::RemoveBlock),
-            ),
-        );
+        app_.add_systems(OnEnter(MainMenuState::Editor), startup::prepare_map_editor)
+            .add_systems(
+                Update,
+                (
+                    placement::place_block.in_set(MapEditorSystemSets::PlaceBlock),
+                    placement::remove_block.in_set(MapEditorSystemSets::RemoveBlock),
+                ),
+            )
+            .configure_sets(
+                Update,
+                (
+                    MapEditorSystemSets::RemoveBlock
+                        .after_ignore_deferred(GizmoSystemSets::UpdateCursor),
+                    MapEditorSystemSets::PlaceBlock
+                        .after_ignore_deferred(GizmoSystemSets::UpdateCursor)
+                        .after_ignore_deferred(MapEditorSystemSets::RemoveBlock),
+                ),
+            );
     }
 }
 

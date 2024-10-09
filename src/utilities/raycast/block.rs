@@ -5,7 +5,7 @@ use bevy::math::bounding::RayCast3d;
 use bevy::prelude::*;
 
 use super::VoxelIterator;
-use crate::map::blocks::model::BlockModel;
+use crate::blocks::model::BlockModel;
 use crate::map::chunk::ChunkData;
 use crate::map::world::VoxelWorld;
 use crate::math::{BlockPos, ChunkPos, FaceDirection};

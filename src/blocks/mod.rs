@@ -5,8 +5,10 @@ use bevy::prelude::*;
 pub mod mesh;
 pub mod model;
 pub mod occlusion;
+pub mod params;
 pub mod shape;
-mod systems;
+pub mod systems;
+pub mod tileset;
 
 /// This plugin adds functionality for working with various block types and
 /// their properties.
@@ -20,7 +22,8 @@ impl Plugin for BlocksPlugin {
                 systems::forward_model_changes_to_rendered,
                 systems::update_block_model,
             ),
-        );
+        )
+        .add_systems(Startup, (systems::load_blocks, systems::load_tilesets));
     }
 }
 

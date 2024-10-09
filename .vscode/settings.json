@@ -13,6 +13,7 @@
     "Aabb",
     "Awgen",
     "Gltf",
+    "numkeys",
     "overworld",
     "raycasting",
     "tileset",

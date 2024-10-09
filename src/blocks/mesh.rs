@@ -6,7 +6,7 @@ use bevy::prelude::*;
 use tinyvec::TinyVec;
 
 use super::occlusion::OccludedBy;
-use crate::tileset::TilePos;
+use super::tileset::TilePos;
 use crate::utilities::meshbuf::MeshBuf;
 
 /// The maximum number of vertices to store on the stack in a [`BlockMesh`].

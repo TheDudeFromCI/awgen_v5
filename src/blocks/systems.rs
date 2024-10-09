@@ -4,14 +4,13 @@ use bevy::math::bounding::Aabb3d;
 use bevy::math::Vec3A;
 use bevy::prelude::*;
 
-use super::mesh::BlockVertex;
+use super::mesh::{BlockMesh, BlockVertex};
 use super::model::BlockModel;
 use super::occlusion::OccludedBy;
 use super::shape::{BlockFace, BlockShape};
-use super::RenderedBlock;
-use crate::map::blocks::mesh::BlockMesh;
+use super::tileset::{TilePos, Tileset, TilesetBundle};
+use super::{Block, RenderedBlock};
 use crate::math::{FaceDirection, FaceRotation};
-use crate::tileset::{TilePos, Tileset};
 use crate::utilities::meshbuf::MeshBuf;
 
 /// This system listens for changes to [`RenderedBlock`] components and updates
@@ -262,4 +261,135 @@ fn update_uv(quad: &mut [BlockVertex; 4], face: &BlockFace) {
     for (vertex, uv) in quad.iter_mut().zip(uv.iter()) {
         vertex.uv = *uv;
     }
+}
+
+/// This system is called on startup to load all block definitions into the
+/// world.
+pub fn load_blocks(mut commands: Commands) {
+    // TODO: Load blocks from a file or database.
+
+    commands.spawn((
+        Block,
+        Name::new("air"),
+        BlockModel::default(),
+        BlockShape::None,
+    ));
+
+    commands.spawn((
+        Block,
+        Name::new("grass"),
+        BlockModel::default(),
+        BlockShape::Cube {
+            tileset: "overworld".to_string(),
+            top: BlockFace {
+                tile: TilePos::new(0, 0),
+                ..default()
+            },
+            bottom: BlockFace {
+                tile: TilePos::new(1, 0),
+                ..default()
+            },
+            north: BlockFace {
+                tile: TilePos::new(2, 0),
+                ..default()
+            },
+            south: BlockFace {
+                tile: TilePos::new(2, 0),
+                ..default()
+            },
+            east: BlockFace {
+                tile: TilePos::new(2, 0),
+                ..default()
+            },
+            west: BlockFace {
+                tile: TilePos::new(2, 0),
+                ..default()
+            },
+        },
+    ));
+
+    commands.spawn((
+        Block,
+        Name::new("dirt"),
+        BlockModel::default(),
+        BlockShape::Cube {
+            tileset: "overworld".to_string(),
+            top: BlockFace {
+                tile: TilePos::new(1, 0),
+                ..default()
+            },
+            bottom: BlockFace {
+                tile: TilePos::new(1, 0),
+                ..default()
+            },
+            north: BlockFace {
+                tile: TilePos::new(1, 0),
+                ..default()
+            },
+            south: BlockFace {
+                tile: TilePos::new(1, 0),
+                ..default()
+            },
+            east: BlockFace {
+                tile: TilePos::new(1, 0),
+                ..default()
+            },
+            west: BlockFace {
+                tile: TilePos::new(1, 0),
+                ..default()
+            },
+        },
+    ));
+
+    commands.spawn((
+        Block,
+        Name::new("debug"),
+        BlockModel::default(),
+        BlockShape::Cube {
+            tileset: "overworld".to_string(),
+            top: BlockFace {
+                tile: TilePos::new(2, 1),
+                ..default()
+            },
+            bottom: BlockFace {
+                tile: TilePos::new(3, 1),
+                ..default()
+            },
+            north: BlockFace {
+                tile: TilePos::new(0, 1),
+                ..default()
+            },
+            south: BlockFace {
+                tile: TilePos::new(1, 1),
+                ..default()
+            },
+            east: BlockFace {
+                tile: TilePos::new(4, 1),
+                ..default()
+            },
+            west: BlockFace {
+                tile: TilePos::new(5, 1),
+                ..default()
+            },
+        },
+    ));
+}
+
+/// This system is called on startup to load all tilesets into the world.
+pub fn load_tilesets(
+    asset_server: Res<AssetServer>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut commands: Commands,
+) {
+    let tileset_image = asset_server.load("tilesets/overworld.png");
+    commands.spawn(TilesetBundle {
+        name: Name::new("overworld"),
+        image: tileset_image.clone(),
+        material: materials.add(StandardMaterial {
+            base_color_texture: Some(tileset_image),
+            perceptual_roughness: 1.0,
+            ..default()
+        }),
+        ..default()
+    });
 }

@@ -5,8 +5,8 @@ use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use super::occlusion::Occludes;
+use super::tileset::TilePos;
 use crate::math::FaceRotation;
-use crate::tileset::TilePos;
 
 /// The shape constructor of a block.
 #[derive(Debug, Default, Clone, Component, Serialize, Deserialize)]

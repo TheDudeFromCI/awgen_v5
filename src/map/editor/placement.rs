@@ -4,11 +4,12 @@
 use bevy::ecs::system::SystemParam;
 use bevy::prelude::*;
 
+use crate::blocks::params::BlockFinder;
 use crate::gizmos::cursor::CursorRaycast;
-use crate::map::blocks::Block;
 use crate::map::chunk::ChunkData;
 use crate::map::remesh::NeedsRemesh;
 use crate::map::world::{VoxelWorld, VoxelWorldCommands};
+use crate::ui::hotbar::resource::{Hotbar, HotbarSlotData};
 
 /// A local timer for block placement/removal.
 #[derive(Debug, SystemParam)]
@@ -58,9 +59,10 @@ impl<'w, 's> PlacementTimer<'w, 's> {
 /// is pressed.
 pub fn place_block(
     mut timer: PlacementTimer,
+    block_finder: BlockFinder,
+    hotbar: Res<Hotbar>,
     cursor: Res<CursorRaycast>,
     world: Res<VoxelWorld>,
-    blocks: Query<(Entity, &Name), With<Block>>,
     mut chunks: Query<&mut ChunkData>,
     mut commands: Commands,
 ) {
@@ -68,33 +70,21 @@ pub fn place_block(
         return;
     }
 
+    let HotbarSlotData::Block(place_block) = hotbar.get_selected() else {
+        return;
+    };
+
     let Some(hit) = &cursor.block else {
         return;
     };
 
-    let block_name: Name = "debug".into();
-    let Some(block_id) = blocks
-        .iter()
-        .find(|(_, name)| **name == block_name)
-        .map(|(entity, _)| entity)
-    else {
-        return;
-    };
-
-    let air_name: Name = "air".into();
-    let Some(air_id) = blocks
-        .iter()
-        .find(|(_, name)| **name == air_name)
-        .map(|(entity, _)| entity)
-    else {
-        return;
-    };
+    let air_block = block_finder.find("air").unwrap();
 
     let target_pos = hit.block.shift(hit.face, 1);
 
     let Some(chunk_id) = world.get_chunk(target_pos.into()) else {
-        let mut new_chunk = ChunkData::fill(air_id);
-        new_chunk.set(target_pos, block_id);
+        let mut new_chunk = ChunkData::fill(air_block);
+        new_chunk.set(target_pos, place_block);
         commands.spawn_chunk(target_pos.into(), new_chunk);
         return;
     };
@@ -103,7 +93,7 @@ pub fn place_block(
         return;
     };
 
-    chunk.set(target_pos, block_id);
+    chunk.set(target_pos, place_block);
     commands.entity(chunk_id).insert(NeedsRemesh);
 }
 
@@ -111,9 +101,9 @@ pub fn place_block(
 /// button
 pub fn remove_block(
     mut timer: PlacementTimer,
+    block_finder: BlockFinder,
     cursor: Res<CursorRaycast>,
     world: Res<VoxelWorld>,
-    blocks: Query<(Entity, &Name), With<Block>>,
     mut chunks: Query<&mut ChunkData>,
     mut commands: Commands,
 ) {
@@ -133,16 +123,9 @@ pub fn remove_block(
         return;
     };
 
-    let air_name: Name = "air".into();
-    let Some(air_id) = blocks
-        .iter()
-        .find(|(_, name)| **name == air_name)
-        .map(|(entity, _)| entity)
-    else {
-        return;
-    };
+    let air_block = block_finder.find("air").unwrap();
 
-    let dirty = chunk.set(hit.block, air_id);
+    let dirty = chunk.set(hit.block, air_block);
     if dirty {
         if chunk.try_convert_to_single() {
             // chunk only contains air. Despawn it.
