@@ -1,6 +1,7 @@
 //! This module implements tileset loading and management.
 
 use bevy::prelude::*;
+use bevy::render::texture::{ImageLoaderSettings, ImageSampler};
 use serde::{Deserialize, Serialize};
 
 /// The total number of tiles in a tileset across one axis.
@@ -67,4 +68,28 @@ impl TilePos {
             uv.y * size + self.y as f32 * size,
         )
     }
+}
+
+/// This system is called on startup to load all tilesets into the world.
+pub fn load_tilesets(
+    asset_server: Res<AssetServer>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut commands: Commands,
+) {
+    let tileset_image = asset_server.load_with_settings(
+        "tilesets/overworld.png",
+        |settings: &mut ImageLoaderSettings| {
+            settings.sampler = ImageSampler::nearest();
+        },
+    );
+    commands.spawn(TilesetBundle {
+        name: Name::new("overworld"),
+        image: tileset_image.clone(),
+        material: materials.add(StandardMaterial {
+            base_color_texture: Some(tileset_image),
+            perceptual_roughness: 1.0,
+            ..default()
+        }),
+        ..default()
+    });
 }

@@ -8,7 +8,7 @@ use super::mesh::{BlockMesh, BlockVertex};
 use super::model::BlockModel;
 use super::occlusion::OccludedBy;
 use super::shape::{BlockFace, BlockShape};
-use super::tileset::{TilePos, Tileset, TilesetBundle};
+use super::tileset::{TilePos, Tileset};
 use super::{Block, RenderedBlock};
 use crate::math::{FaceDirection, FaceRotation};
 use crate::utilities::meshbuf::MeshBuf;
@@ -373,23 +373,4 @@ pub fn load_blocks(mut commands: Commands) {
             },
         },
     ));
-}
-
-/// This system is called on startup to load all tilesets into the world.
-pub fn load_tilesets(
-    asset_server: Res<AssetServer>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    mut commands: Commands,
-) {
-    let tileset_image = asset_server.load("tilesets/overworld.png");
-    commands.spawn(TilesetBundle {
-        name: Name::new("overworld"),
-        image: tileset_image.clone(),
-        material: materials.add(StandardMaterial {
-            base_color_texture: Some(tileset_image),
-            perceptual_roughness: 1.0,
-            ..default()
-        }),
-        ..default()
-    });
 }

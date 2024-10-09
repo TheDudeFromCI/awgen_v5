@@ -23,7 +23,7 @@ impl Plugin for BlocksPlugin {
                 systems::update_block_model,
             ),
         )
-        .add_systems(Startup, (systems::load_blocks, systems::load_tilesets));
+        .add_systems(Startup, (systems::load_blocks, tileset::load_tilesets));
     }
 }
 
