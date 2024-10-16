@@ -3,6 +3,8 @@
 use bevy::asset::embedded_asset;
 use bevy::prelude::*;
 use bevy::render::view::RenderLayers;
+use bevy_mod_picking::events::{Click, Pointer};
+use bevy_mod_picking::prelude::On;
 use resource::{Hotbar, HotbarSlotData};
 
 use super::menu::MainMenuState;
@@ -109,17 +111,22 @@ pub fn setup_hotbar(
                     ..default()
                 })
                 .with_children(|parent| {
-                    for _ in 0 .. 10 {
+                    for slot_index in 0 .. 10 {
                         parent
-                            .spawn(ImageBundle {
-                                style: Style {
-                                    width: Val::Px(HOTBAR_SIZE),
-                                    height: Val::Px(HOTBAR_SIZE),
+                            .spawn((
+                                ImageBundle {
+                                    style: Style {
+                                        width: Val::Px(HOTBAR_SIZE),
+                                        height: Val::Px(HOTBAR_SIZE),
+                                        ..default()
+                                    },
+                                    image: hotbar_bg.clone().into(),
                                     ..default()
                                 },
-                                image: hotbar_bg.clone().into(),
-                                ..default()
-                            })
+                                On::<Pointer<Click>>::run(move |mut hotbar: ResMut<Hotbar>| {
+                                    hotbar.select_slot(slot_index);
+                                }),
+                            ))
                             .with_children(|parent| {
                                 let slot_id = parent
                                     .spawn((

@@ -9,6 +9,7 @@ use std::process::Termination;
 use bevy::log::LogPlugin;
 use bevy::prelude::*;
 use bevy::window::WindowMode;
+use bevy_mod_picking::DefaultPickingPlugins;
 use clap::Parser;
 use settings::ProjectSettings;
 
@@ -145,6 +146,7 @@ fn main() -> impl Termination {
                     ..default()
                 }),
         )
+        .add_plugins(DefaultPickingPlugins)
         .add_plugins((
             camera::CameraPlugin,
             ui::AwgenUIPlugin,
