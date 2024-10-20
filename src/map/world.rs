@@ -2,9 +2,11 @@
 
 use bevy::prelude::*;
 use bevy::utils::HashMap;
+use bevy_mod_picking::PickableBundle;
 
 use super::chunk::ChunkData;
 use super::remesh::{NeedsRemesh, UniqueBlocks};
+use crate::map::ChunkCollider;
 use crate::math::{ChunkPos, Position, CHUNK_SIZE};
 
 /// An infinite, 3D grid of voxels, represented by chunks, that make up a world.
@@ -65,6 +67,8 @@ impl<'w, 's> VoxelWorldCommands for Commands<'w, 's> {
                     data,
                     UniqueBlocks::default(),
                     NeedsRemesh,
+                    ChunkCollider,
+                    PickableBundle::default(),
                     SpatialBundle {
                         transform: Transform::from_xyz(
                             pos.x as f32 * CHUNK_SIZE as f32,

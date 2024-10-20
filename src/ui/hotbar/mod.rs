@@ -3,8 +3,9 @@
 use bevy::asset::embedded_asset;
 use bevy::prelude::*;
 use bevy::render::view::RenderLayers;
+use bevy_mod_picking::PickableBundle;
 use bevy_mod_picking::events::{Click, Pointer};
-use bevy_mod_picking::prelude::On;
+use bevy_mod_picking::prelude::{On, Pickable};
 use resource::{Hotbar, HotbarSlotData};
 
 use super::menu::MainMenuState;
@@ -93,6 +94,7 @@ pub fn setup_hotbar(
                 },
                 ..default()
             },
+            Pickable::IGNORE,
         ))
         .with_children(|parent| {
             parent
@@ -129,39 +131,33 @@ pub fn setup_hotbar(
                             ))
                             .with_children(|parent| {
                                 let slot_id = parent
-                                    .spawn((
-                                        HotbarSlot,
-                                        ImageBundle {
-                                            style: Style {
-                                                position_type: PositionType::Absolute,
-                                                width: Val::Percent(100.0),
-                                                height: Val::Percent(100.0),
-                                                ..default()
-                                            },
-                                            image: UiImage::solid_color(Color::NONE),
+                                    .spawn((HotbarSlot, ImageBundle {
+                                        style: Style {
+                                            position_type: PositionType::Absolute,
+                                            width: Val::Percent(100.0),
+                                            height: Val::Percent(100.0),
                                             ..default()
                                         },
-                                    ))
+                                        image: UiImage::solid_color(Color::NONE),
+                                        ..default()
+                                    }))
                                     .id();
                                 hotbar.insert_slot(slot_id);
                             });
                     }
 
-                    parent.spawn((
-                        HotbarSelector,
-                        ImageBundle {
-                            style: Style {
-                                position_type: PositionType::Absolute,
-                                width: Val::Px(HOTBAR_SIZE),
-                                height: Val::Px(HOTBAR_SIZE),
-                                top: Val::Px(0.0),
-                                left: Val::Px(0.0),
-                                ..default()
-                            },
-                            image: hotbar_sel.into(),
+                    parent.spawn((HotbarSelector, ImageBundle {
+                        style: Style {
+                            position_type: PositionType::Absolute,
+                            width: Val::Px(HOTBAR_SIZE),
+                            height: Val::Px(HOTBAR_SIZE),
+                            top: Val::Px(0.0),
+                            left: Val::Px(0.0),
                             ..default()
                         },
-                    ));
+                        image: hotbar_sel.into(),
+                        ..default()
+                    }));
                 });
         });
 }

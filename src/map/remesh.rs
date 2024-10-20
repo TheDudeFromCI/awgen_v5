@@ -6,6 +6,7 @@ use bevy::prelude::*;
 use bevy::utils::{HashMap, HashSet, Parallel};
 
 use super::chunk::ChunkData;
+use super::ChunkCollider;
 use crate::blocks::model::BlockModel;
 use crate::blocks::occlusion::BlockDataOccludedBy;
 use crate::blocks::shape::BlockShape;
@@ -143,6 +144,7 @@ pub(crate) fn remesh(
             commands
                 .spawn((
                     ChunkModelPart,
+                    ChunkCollider,
                     MaterialMeshBundle {
                         mesh: meshes.add(model.mesh),
                         material: model.material,

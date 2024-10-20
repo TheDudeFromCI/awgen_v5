@@ -17,3 +17,9 @@ impl Plugin for VoxelWorldPlugin {
             .add_plugins((remesh::ChunkRemeshPlugin, editor::MapEditorPlugin));
     }
 }
+
+/// This is marker component that indicates that an entity is part of a chunk
+/// and is used to test against mouse picking collisions. Any chunks that do
+/// not contain this chunk will not be seen by the mouse picker.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash, Component)]
+pub struct ChunkCollider;
