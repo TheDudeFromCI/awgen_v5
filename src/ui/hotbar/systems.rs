@@ -3,8 +3,9 @@
 
 use bevy::prelude::*;
 use bevy::render::view::RenderLayers;
+use bevy_mod_picking::PickableBundle;
 use bevy_mod_picking::events::{Click, Pointer};
-use bevy_mod_picking::prelude::{On, Pickable};
+use bevy_mod_picking::prelude::{On, Pickable, PointerButton};
 
 use super::resource::{Hotbar, HotbarSlotData};
 use super::{
@@ -15,6 +16,7 @@ use super::{
     HotbarRoot,
     HotbarSelector,
     HotbarSlot,
+    HotbarSlotIcon,
 };
 use crate::blocks::RenderedBlock;
 use crate::tools::Tool;
@@ -72,39 +74,46 @@ pub fn setup_hotbar(
                                     image: hotbar_bg.clone().into(),
                                     ..default()
                                 },
-                                On::<Pointer<Click>>::run(move |mut hotbar: ResMut<Hotbar>| {
-                                    hotbar.select_slot(slot_index);
-                                }),
+                                HotbarSlot { index: slot_index },
+                                PickableBundle::default(),
                             ))
                             .with_children(|parent| {
                                 let slot_id = parent
-                                    .spawn((HotbarSlot, ImageBundle {
-                                        style: Style {
-                                            position_type: PositionType::Absolute,
-                                            width: Val::Percent(100.0),
-                                            height: Val::Percent(100.0),
+                                    .spawn((
+                                        HotbarSlotIcon,
+                                        ImageBundle {
+                                            style: Style {
+                                                position_type: PositionType::Absolute,
+                                                width: Val::Percent(100.0),
+                                                height: Val::Percent(100.0),
+                                                ..default()
+                                            },
+                                            image: UiImage::solid_color(Color::NONE),
                                             ..default()
                                         },
-                                        image: UiImage::solid_color(Color::NONE),
-                                        ..default()
-                                    }))
+                                        Pickable::IGNORE,
+                                    ))
                                     .id();
                                 hotbar.insert_slot(slot_id);
                             });
                     }
 
-                    parent.spawn((HotbarSelector, ImageBundle {
-                        style: Style {
-                            position_type: PositionType::Absolute,
-                            width: Val::Px(HOTBAR_SIZE),
-                            height: Val::Px(HOTBAR_SIZE),
-                            top: Val::Px(0.0),
-                            left: Val::Px(0.0),
+                    parent.spawn((
+                        HotbarSelector,
+                        ImageBundle {
+                            style: Style {
+                                position_type: PositionType::Absolute,
+                                width: Val::Px(HOTBAR_SIZE),
+                                height: Val::Px(HOTBAR_SIZE),
+                                top: Val::Px(0.0),
+                                left: Val::Px(0.0),
+                                ..default()
+                            },
+                            image: hotbar_sel.into(),
                             ..default()
                         },
-                        image: hotbar_sel.into(),
-                        ..default()
-                    }));
+                        Pickable::IGNORE,
+                    ));
                 });
         });
 }
@@ -168,8 +177,8 @@ pub fn select_slot_with_numkeys(mut hotbar: ResMut<Hotbar>, input: Res<ButtonInp
 /// hotbar resource.
 pub fn update_slot_visuals(
     mut hotbar: ResMut<Hotbar>,
-    tools: Query<&UiImage, (With<Tool>, Without<HotbarSlot>)>,
-    mut slots: Query<&mut UiImage, With<HotbarSlot>>,
+    tools: Query<&UiImage, (With<Tool>, Without<HotbarSlotIcon>)>,
+    mut slots: Query<&mut UiImage, With<HotbarSlotIcon>>,
     mut commands: Commands,
 ) {
     for i in 0 .. hotbar.slot_count() {
@@ -218,6 +227,7 @@ pub fn update_slot_visuals(
                                 transform: block_transform,
                                 ..default()
                             },
+                            Pickable::IGNORE,
                         ));
                     })
                     .set_parent(slot_id);
@@ -226,4 +236,24 @@ pub fn update_slot_visuals(
     }
 
     hotbar.mark_clean();
+}
+
+/// This systems listens for clicks on the hotbar slots and selects the
+/// corresponding slot.
+pub fn click_slot(
+    mut click_events: EventReader<Pointer<Click>>,
+    mut hotbar: ResMut<Hotbar>,
+    slots: Query<&HotbarSlot>,
+) {
+    for ev in click_events.read() {
+        if ev.button != PointerButton::Primary {
+            continue;
+        };
+
+        let Ok(slot) = slots.get(ev.target) else {
+            continue;
+        };
+
+        hotbar.select_slot(slot.index);
+    }
 }

@@ -5,6 +5,7 @@ use std::f32::consts::TAU;
 
 use bevy::pbr::{NotShadowCaster, NotShadowReceiver};
 use bevy::prelude::*;
+use bevy_mod_picking::prelude::Pickable;
 
 use super::cursor::CursorRaycast;
 
@@ -74,6 +75,7 @@ pub fn build_block_face_gizmo(
             BlockFaceGizmo,
             NotShadowCaster,
             NotShadowReceiver,
+            Pickable::IGNORE,
             PbrBundle {
                 mesh: outer_mesh,
                 material: outer_material,
@@ -85,6 +87,7 @@ pub fn build_block_face_gizmo(
                 BlockFaceGizmoInner,
                 NotShadowCaster,
                 NotShadowReceiver,
+                Pickable::IGNORE,
                 PbrBundle {
                     mesh: inner_mesh,
                     material: inner_material,
