@@ -140,21 +140,17 @@ impl Default for CameraControls {
 
 /// Spawns a camera.
 fn setup_camera(mut commands: Commands) {
-    commands.spawn((
-        MainCamera,
-        IsDefaultUiCamera,
-        Camera3dBundle {
-            projection: OrthographicProjection {
-                near: -CAMERA_CLIP_DIST,
-                far: CAMERA_CLIP_DIST,
-                scaling_mode: ScalingMode::FixedVertical(BASE_ZOOM),
-                scale: 1.0,
-                ..default()
-            }
-            .into(),
+    commands.spawn((MainCamera, IsDefaultUiCamera, Camera3dBundle {
+        projection: OrthographicProjection {
+            near: -CAMERA_CLIP_DIST,
+            far: CAMERA_CLIP_DIST,
+            scaling_mode: ScalingMode::FixedVertical(BASE_ZOOM),
+            scale: 1.0,
             ..default()
-        },
-    ));
+        }
+        .into(),
+        ..default()
+    }));
 
     commands.spawn((
         CameraTarget::default(),
@@ -249,9 +245,14 @@ fn mouse_rotate(
 
 /// This system listens for mouse wheel inputs and zooms the camera accordingly.
 fn mouse_zoom(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
     mut mouse_wheel: EventReader<MouseWheel>,
     mut cam_target: Query<(&mut Transform, &CameraControls)>,
 ) {
+    if !keyboard_input.pressed(KeyCode::AltLeft) {
+        return;
+    }
+
     let (mut target_pos, target_props) = cam_target.single_mut();
     let mut delta = mouse_wheel.read().map(|e| e.y).sum::<f32>();
     delta *= target_props.zoom_sensitivity;

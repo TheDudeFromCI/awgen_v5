@@ -1,6 +1,7 @@
 //! This module contains the systems used to manage the editor hotbar HUD
 //! element.
 
+use bevy::input::mouse::MouseWheel;
 use bevy::prelude::*;
 use bevy::render::view::RenderLayers;
 use bevy_mod_picking::PickableBundle;
@@ -255,5 +256,24 @@ pub fn click_slot(
         };
 
         hotbar.select_slot(slot.index);
+    }
+}
+
+/// This system listens for mouse wheel events and scrolls the hotbar slots.
+pub fn scroll_slots(
+    mut wheel_events: EventReader<MouseWheel>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut hotbar: ResMut<Hotbar>,
+) {
+    if keyboard_input.pressed(KeyCode::AltLeft) {
+        return;
+    }
+
+    for ev in wheel_events.read() {
+        if ev.y.abs() < 1.0 {
+            continue;
+        }
+
+        hotbar.scroll(-ev.y as i32);
     }
 }

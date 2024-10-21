@@ -99,6 +99,12 @@ impl Hotbar {
             slot.is_dirty = false;
         }
     }
+
+    /// Scrolls the selection by the given delta.
+    pub fn scroll(&mut self, delta: i32) {
+        let new_selection = self.selection as i32 + delta;
+        self.selection = new_selection.rem_euclid(self.slots.len() as i32) as usize;
+    }
 }
 
 /// This component is used to store the data for a hotbar slot.

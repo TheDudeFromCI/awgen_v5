@@ -37,6 +37,7 @@ impl Plugin for UiHotbarPlugin {
                 (
                     systems::select_slot_with_numkeys.in_set(HotbarSystems::SelectSlot),
                     systems::click_slot.in_set(HotbarSystems::SelectSlot),
+                    systems::scroll_slots.in_set(HotbarSystems::SelectSlot),
                     systems::update_selected_index.in_set(HotbarSystems::UpdateSlotLogic),
                     systems::update_slot_visuals.in_set(HotbarSystems::UpdateSlotVisuals),
                 ),
