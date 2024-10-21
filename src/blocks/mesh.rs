@@ -1,8 +1,9 @@
 //! Data structures for storing block meshes.
 
-use bevy::math::bounding::Aabb3d;
 use bevy::math::Vec3A;
+use bevy::math::bounding::Aabb3d;
 use bevy::prelude::*;
+use bevy::render::mesh::VertexAttributeValues;
 use tinyvec::TinyVec;
 
 use super::occlusion::OccludedBy;
@@ -153,6 +154,47 @@ impl BlockMesh {
     }
 }
 
+impl From<&Mesh> for BlockMesh {
+    fn from(value: &Mesh) -> Self {
+        let mut mesh_part = BlockMeshPart::default();
+
+        let positions = value.attribute(Mesh::ATTRIBUTE_POSITION).unwrap();
+        let normals = value.attribute(Mesh::ATTRIBUTE_NORMAL).unwrap();
+        let uvs = value.attribute(Mesh::ATTRIBUTE_UV_0).unwrap();
+        let indices = value.indices().unwrap();
+
+        let VertexAttributeValues::Float32x3(positions) = positions else {
+            panic!("Invalid position attribute");
+        };
+
+        let VertexAttributeValues::Float32x3(normals) = normals else {
+            panic!("Invalid normal attribute");
+        };
+
+        let VertexAttributeValues::Float32x2(uvs) = uvs else {
+            panic!("Invalid uv attribute");
+        };
+
+        for i in 0 .. positions.len() {
+            mesh_part.vertices.push(BlockVertex {
+                position: positions[i].into(),
+                normal: normals[i].into(),
+                uv: uvs[i].into(),
+                tile: None,
+            });
+        }
+
+        for index in indices.iter() {
+            mesh_part.indices.push(index as u16);
+        }
+
+        BlockMesh {
+            center: Some(mesh_part),
+            ..default()
+        }
+    }
+}
+
 /// The mesh of a primitive block model.
 #[derive(Debug, Default, Clone)]
 pub struct BlockMeshPart {
@@ -185,12 +227,71 @@ impl BlockMeshPart {
             mesh.positions.push(vertex.position.into());
             mesh.normals.push(vertex.normal.into());
 
-            let uv = vertex.tile.transform_uv(vertex.uv);
-            mesh.uvs.push(uv.into());
+            if let Some(tile) = vertex.tile {
+                let uv = tile.transform_uv(vertex.uv);
+                mesh.uvs.push(uv.into());
+            } else {
+                mesh.uvs.push(vertex.uv.into());
+            }
         }
 
         for index in self.indices.iter() {
             mesh.indices.push(*index as u32 + offset);
+        }
+    }
+
+    /// Creates a block mesh part from the given mesh.
+    pub fn new_from(value: &Mesh, transform: Transform) -> Self {
+        let mut mesh_part = BlockMeshPart::default();
+        let matrix = transform.compute_matrix();
+
+        let positions = value.attribute(Mesh::ATTRIBUTE_POSITION).unwrap();
+        let normals = value.attribute(Mesh::ATTRIBUTE_NORMAL).unwrap();
+        let uvs = value.attribute(Mesh::ATTRIBUTE_UV_0).unwrap();
+        let indices = value.indices().unwrap();
+
+        let VertexAttributeValues::Float32x3(positions) = positions else {
+            panic!("Invalid position attribute");
+        };
+
+        let VertexAttributeValues::Float32x3(normals) = normals else {
+            panic!("Invalid normal attribute");
+        };
+
+        let VertexAttributeValues::Float32x2(uvs) = uvs else {
+            panic!("Invalid uv attribute");
+        };
+
+        for i in 0 .. positions.len() {
+            let position = matrix * Vec3::from(positions[i]).extend(1.0);
+            let normal = matrix * Vec3::from(normals[i]).extend(0.0);
+
+            mesh_part.vertices.push(BlockVertex {
+                position: position.xyz(),
+                normal: normal.xyz(),
+                uv: uvs[i].into(),
+                tile: None,
+            });
+        }
+
+        for index in indices.iter() {
+            mesh_part.indices.push(index as u16);
+        }
+
+        mesh_part
+    }
+
+    /// Extends this block mesh part with the vertices and indices of another
+    /// block mesh part.
+    pub fn extend(&mut self, other: &BlockMeshPart) {
+        let offset = self.vertices.len() as u16;
+
+        for vertex in other.vertices.iter() {
+            self.vertices.push(*vertex);
+        }
+
+        for index in other.indices.iter() {
+            self.indices.push(*index + offset);
         }
     }
 }
@@ -207,6 +308,7 @@ pub struct BlockVertex {
     /// The UV coordinates of the vertex.
     pub uv: Vec2,
 
-    /// The tileset position of the vertex.
-    pub tile: TilePos,
+    /// The tileset position of the vertex. If set to `None`, the texture
+    /// coordinates specified in the UV field will not be modified.
+    pub tile: Option<TilePos>,
 }

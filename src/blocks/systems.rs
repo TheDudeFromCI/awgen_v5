@@ -1,7 +1,8 @@
 //! The various systems used within the [`BlocksPlugin`].
 
-use bevy::math::bounding::Aabb3d;
+use bevy::gltf::{GltfMesh, GltfNode};
 use bevy::math::Vec3A;
+use bevy::math::bounding::Aabb3d;
 use bevy::prelude::*;
 
 use super::mesh::{BlockMesh, BlockVertex};
@@ -10,6 +11,7 @@ use super::occlusion::OccludedBy;
 use super::shape::{BlockFace, BlockShape};
 use super::tileset::{TilePos, Tileset};
 use super::{Block, RenderedBlock};
+use crate::blocks::mesh::BlockMeshPart;
 use crate::math::{FaceDirection, FaceRotation};
 use crate::utilities::meshbuf::MeshBuf;
 
@@ -34,32 +36,30 @@ pub fn update_rendered_block_model(
             continue;
         };
 
-        match model {
+        let (block_mesh, block_mat) = match model {
             BlockModel::None => {
                 *mesh = Default::default();
                 *material = Default::default();
+                continue;
             }
             BlockModel::Primitive {
                 material: block_mat,
                 mesh: block_mesh,
                 ..
-            } => {
-                let mut mesh_buf = MeshBuf::new();
-                block_mesh.append_to(OccludedBy::empty(), &mut mesh_buf);
-                let bevy_mesh: Mesh = mesh_buf.into();
-
-                *mesh = meshes.add(bevy_mesh);
-                *material = block_mat.clone();
-            }
+            } => (block_mesh, block_mat),
             BlockModel::Custom {
-                material: block_mat,
                 mesh: block_mesh,
+                material: block_mat,
                 ..
-            } => {
-                *mesh = block_mesh.clone();
-                *material = block_mat.clone();
-            }
-        }
+            } => (block_mesh, block_mat),
+        };
+
+        let mut mesh_buf = MeshBuf::new();
+        block_mesh.append_to(OccludedBy::empty(), &mut mesh_buf);
+        let bevy_mesh: Mesh = mesh_buf.into();
+
+        *mesh = meshes.add(bevy_mesh);
+        *material = block_mat.clone();
     }
 }
 
@@ -181,19 +181,85 @@ pub fn update_block_model(
             }
             BlockShape::Custom { asset } => {
                 *model = BlockModel::Custom {
-                    material: asset_server.load(
-                        GltfAssetLabel::Material {
-                            index: 0,
-                            is_scale_inverted: false,
-                        }
-                        .from_asset(asset.clone()),
-                    ),
-                    mesh: asset_server.load(GltfAssetLabel::Mesh(0).from_asset(asset.clone())),
-
-                    // TODO: Update bounds when mesh loading is complete.
+                    material: asset_server
+                        .load(GltfAssetLabel::DefaultMaterial.from_asset(asset.clone())),
+                    asset: asset_server.load(format!("models/{asset}.glb")),
                     bounds: Aabb3d::new(Vec3A::ZERO, Vec3A::ZERO),
+                    mesh: Default::default(),
                 };
+
+                debug!("Loading custom mesh '{asset}.obj' for block: {name}");
             }
+        }
+    }
+}
+
+/// This system listens for asset events and updates custom block models as the
+/// linked assets finish loading.
+pub fn update_custom_block_model_mesh(
+    mut asset_events: EventReader<AssetEvent<Gltf>>,
+    gltf: Res<Assets<Gltf>>,
+    gltf_nodes: Res<Assets<GltfNode>>,
+    gltf_meshes: Res<Assets<GltfMesh>>,
+    meshes: Res<Assets<Mesh>>,
+    mut models: Query<(&mut BlockModel, &Name)>,
+) {
+    for ev in asset_events.read() {
+        let AssetEvent::LoadedWithDependencies { id } = ev else {
+            continue;
+        };
+
+        info!("Loaded custom mesh asset with ID: {}", id);
+
+        for (mut model, name) in models.iter_mut() {
+            let BlockModel::Custom {
+                asset,
+                mesh,
+                bounds,
+                material,
+                ..
+            } = &mut *model
+            else {
+                continue;
+            };
+
+            if asset.id() != *id {
+                continue;
+            }
+
+            let Some(gltf_data) = gltf.get(asset) else {
+                error!("Failed to retrieve custom mesh for block: {name}");
+                continue;
+            };
+
+            let mut block_mesh = BlockMeshPart::default();
+
+            for gltf_node_handle in &gltf_data.nodes {
+                let gltf_node = gltf_nodes.get(gltf_node_handle).unwrap();
+
+                let mut transform = gltf_node.transform;
+                transform.translation += Vec3::new(0.5, 0.0, 0.5);
+
+                if let Some(mesh_handle) = &gltf_node.mesh {
+                    let gltf_mesh = gltf_meshes.get(mesh_handle).unwrap();
+                    for primitive in &gltf_mesh.primitives {
+                        if let Some(mat) = &primitive.material {
+                            *material = mat.clone();
+                        }
+                        let raw_mesh = meshes.get(&primitive.mesh).unwrap();
+                        block_mesh.extend(&BlockMeshPart::new_from(raw_mesh, transform));
+                    }
+                }
+            }
+
+            let block_mesh = BlockMesh {
+                center: Some(block_mesh),
+                ..default()
+            };
+            *bounds = block_mesh.get_bounds();
+            *mesh = Box::new(block_mesh);
+
+            info!("Loaded custom mesh model for block: {name}");
         }
     }
 }
@@ -221,10 +287,10 @@ fn quad(rot: Quat, translate: Vec3, scale: Vec3, tile: TilePos) -> [BlockVertex;
     vertices[2].uv = Vec2::new(1.0, 0.0);
     vertices[3].uv = Vec2::new(0.0, 0.0);
 
-    vertices[0].tile = tile;
-    vertices[1].tile = tile;
-    vertices[2].tile = tile;
-    vertices[3].tile = tile;
+    vertices[0].tile = Some(tile);
+    vertices[1].tile = Some(tile);
+    vertices[2].tile = Some(tile);
+    vertices[3].tile = Some(tile);
 
     vertices
 }
@@ -371,6 +437,15 @@ pub fn load_blocks(mut commands: Commands) {
                 tile: TilePos::new(5, 1),
                 ..default()
             },
+        },
+    ));
+
+    commands.spawn((
+        Block,
+        Name::new("sign1"),
+        BlockModel::default(),
+        BlockShape::Custom {
+            asset: "sign1".to_string(),
         },
     ));
 }

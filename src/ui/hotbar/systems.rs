@@ -5,7 +5,7 @@ use bevy::prelude::*;
 use bevy::render::view::RenderLayers;
 use bevy_mod_picking::PickableBundle;
 use bevy_mod_picking::events::{Click, Pointer};
-use bevy_mod_picking::prelude::{On, Pickable, PointerButton};
+use bevy_mod_picking::prelude::{Pickable, PointerButton};
 
 use super::resource::{Hotbar, HotbarSlotData};
 use super::{

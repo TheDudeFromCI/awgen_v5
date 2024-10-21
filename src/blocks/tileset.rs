@@ -76,14 +76,24 @@ pub fn load_tilesets(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut commands: Commands,
 ) {
+    load_tileset(&asset_server, &mut materials, &mut commands, "overworld");
+}
+
+/// Loads the tileset with the given name.
+fn load_tileset(
+    asset_server: &Res<AssetServer>,
+    materials: &mut ResMut<Assets<StandardMaterial>>,
+    commands: &mut Commands,
+    name: &str,
+) {
     let tileset_image = asset_server.load_with_settings(
-        "tilesets/overworld.png",
+        format!("tilesets/{name}.png"),
         |settings: &mut ImageLoaderSettings| {
             settings.sampler = ImageSampler::nearest();
         },
     );
     commands.spawn(TilesetBundle {
-        name: Name::new("overworld"),
+        name: Name::new(name.to_string()),
         image: tileset_image.clone(),
         material: materials.add(StandardMaterial {
             base_color_texture: Some(tileset_image),

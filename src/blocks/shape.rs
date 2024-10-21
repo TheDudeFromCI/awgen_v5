@@ -41,7 +41,7 @@ pub enum BlockShape {
 
     /// A block with a custom shape.
     Custom {
-        /// The asset path of the block model.
+        /// The model name.
         asset: String,
     },
 }

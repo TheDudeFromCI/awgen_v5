@@ -21,6 +21,8 @@ impl Plugin for BlocksPlugin {
                 systems::update_rendered_block_model,
                 systems::forward_model_changes_to_rendered,
                 systems::update_block_model,
+                systems::update_custom_block_model_mesh
+                    .after_ignore_deferred(systems::update_block_model),
             ),
         )
         .add_systems(Startup, (systems::load_blocks, tileset::load_tilesets));

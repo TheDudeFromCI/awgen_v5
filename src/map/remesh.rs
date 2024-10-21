@@ -5,12 +5,12 @@ use std::cmp::Ordering;
 use bevy::prelude::*;
 use bevy::utils::{HashMap, HashSet, Parallel};
 
-use super::chunk::ChunkData;
 use super::ChunkCollider;
+use super::chunk::ChunkData;
+use crate::blocks::Block;
 use crate::blocks::model::BlockModel;
 use crate::blocks::occlusion::BlockDataOccludedBy;
 use crate::blocks::shape::BlockShape;
-use crate::blocks::Block;
 use crate::utilities::chunk_iter::ChunkIterator;
 use crate::utilities::meshbuf::MeshBuf;
 
@@ -142,15 +142,11 @@ pub(crate) fn remesh(
         // Spawn any remaining model parts directly.
         for model in models {
             commands
-                .spawn((
-                    ChunkModelPart,
-                    ChunkCollider,
-                    MaterialMeshBundle {
-                        mesh: meshes.add(model.mesh),
-                        material: model.material,
-                        ..default()
-                    },
-                ))
+                .spawn((ChunkModelPart, ChunkCollider, MaterialMeshBundle {
+                    mesh: meshes.add(model.mesh),
+                    material: model.material,
+                    ..default()
+                }))
                 .set_parent(chunk_id);
         }
     }
@@ -198,10 +194,7 @@ pub(crate) fn on_block_model_updated(
             }
         }
 
-        debug!(
-            "Block model {block_id} updated, queuing {count} chunks for
-remesh."
-        );
+        debug!("Block model {block_id} updated, queuing {count} chunks for remesh.");
     }
 }
 
@@ -249,6 +242,7 @@ pub fn build_models(
 ) -> Vec<ChunkModel> {
     let occlusion = BlockDataOccludedBy::from_block_data(data, block_shapes);
     let mut meshes: HashMap<Handle<StandardMaterial>, MeshBuf> = HashMap::new();
+    let mut models = Vec::new();
 
     for pos in ChunkIterator::default() {
         let block = data.get(pos);
@@ -256,8 +250,10 @@ pub fn build_models(
             continue;
         };
 
-        let BlockModel::Primitive { material, mesh, .. } = model else {
-            continue;
+        let (material, mesh) = match model {
+            BlockModel::Primitive { material, mesh, .. } => (material, mesh),
+            BlockModel::Custom { material, mesh, .. } => (material, mesh),
+            _ => continue,
         };
 
         let mesh_buf = match meshes.contains_key(material) {
@@ -271,7 +267,6 @@ pub fn build_models(
         block_mesh.append_to(occlusion.get(pos), mesh_buf);
     }
 
-    let mut models = Vec::new();
     for (tileset, mesh) in meshes.into_iter() {
         models.push(ChunkModel {
             mesh: mesh.into(),

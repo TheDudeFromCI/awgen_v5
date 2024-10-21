@@ -7,7 +7,7 @@ use bevy::prelude::*;
 use crate::blocks::params::BlockFinder;
 use crate::map::chunk::ChunkData;
 use crate::map::world::VoxelWorldCommands;
-use crate::math::{BlockPos, ChunkPos, CHUNK_SIZE};
+use crate::math::{BlockPos, CHUNK_SIZE, ChunkPos};
 use crate::ui::hotbar::resource::{Hotbar, HotbarSlotData};
 
 /// This system is called when the application enters the map editor. It sets up
@@ -21,6 +21,7 @@ pub fn prepare_map_editor(
     commands.spawn(DirectionalLightBundle {
         directional_light: DirectionalLight {
             shadows_enabled: true,
+            illuminance: 4000.0,
             ..default()
         },
         transform: Transform::from_rotation(Quat::from_euler(EulerRot::XYZ, -1.0, -0.8, 0.0)),
@@ -32,6 +33,7 @@ pub fn prepare_map_editor(
     let grass = block_finder.find("grass").unwrap();
     let dirt = block_finder.find("dirt").unwrap();
     let debug = block_finder.find("debug").unwrap();
+    let sign1 = block_finder.find("sign1").unwrap();
 
     let mut chunk_data = ChunkData::fill(air);
     for x in 0 .. CHUNK_SIZE {
@@ -45,4 +47,5 @@ pub fn prepare_map_editor(
     hotbar.set_slot(0, HotbarSlotData::Block(grass));
     hotbar.set_slot(1, HotbarSlotData::Block(dirt));
     hotbar.set_slot(2, HotbarSlotData::Block(debug));
+    hotbar.set_slot(3, HotbarSlotData::Block(sign1));
 }
