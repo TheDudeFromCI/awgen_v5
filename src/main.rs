@@ -32,6 +32,12 @@ struct Args {
     #[arg(short, long)]
     debug: bool,
 
+    /// Enable trace logging (only available in development builds)
+    /// Requires the `debug` flag to be enabled.
+    #[cfg(debug_assertions)]
+    #[arg(short, long)]
+    trace: bool,
+
     /// The project workspace to open. If not provided, the current directory is
     /// used.
     #[arg(short, long)]
@@ -114,6 +120,14 @@ fn main() -> impl Termination {
 
     println!("Debug enabled: {}", args.debug);
     let log_level = if args.debug {
+        #[cfg(debug_assertions)]
+        if args.trace {
+            println!("Trace logging enabled.");
+            bevy::log::Level::TRACE
+        } else {
+            bevy::log::Level::DEBUG
+        }
+        #[cfg(not(debug_assertions))]
         bevy::log::Level::DEBUG
     } else {
         bevy::log::Level::INFO
@@ -140,6 +154,7 @@ fn main() -> impl Termination {
                 })
                 .set(LogPlugin {
                     level: log_level,
+                    filter: "wgpu=error,naga=warn,calloop=debug,polling=debug".to_string(),
                     ..default()
                 })
                 .set(AssetPlugin {
