@@ -180,10 +180,12 @@ pub fn update_block_model(
                 };
             }
             BlockShape::Custom { asset } => {
+                let model_path = format!("models/{asset}.glb");
+                let default_mat = GltfAssetLabel::DefaultMaterial.from_asset(model_path.clone());
+
                 *model = BlockModel::Custom {
-                    material: asset_server
-                        .load(GltfAssetLabel::DefaultMaterial.from_asset(asset.clone())),
-                    asset: asset_server.load(format!("models/{asset}.glb")),
+                    material: asset_server.load(default_mat),
+                    asset: asset_server.load(model_path),
                     bounds: Aabb3d::new(Vec3A::ZERO, Vec3A::ZERO),
                     mesh: Default::default(),
                 };
