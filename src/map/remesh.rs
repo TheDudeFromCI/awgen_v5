@@ -130,6 +130,9 @@ pub(crate) fn remesh(
                 // Check if we have more model parts to assign.
                 if let Some(model_part) = models.pop() {
                     // Reuse the existing entity.
+                    let aabb = model_part.mesh.compute_aabb().unwrap();
+                    commands.entity(*child).insert(aabb);
+
                     meshes.insert(&*mesh, model_part.mesh);
                     *material = model_part.material;
                 } else {
