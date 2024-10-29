@@ -4,7 +4,7 @@
 use bevy::asset::embedded_asset;
 use bevy::prelude::*;
 
-use crate::ui::menu::MainMenuState;
+use crate::ui::{EditorWindowState, GameState};
 
 pub mod cursor;
 pub mod face;
@@ -14,7 +14,7 @@ pub struct GizmosPlugin;
 impl Plugin for GizmosPlugin {
     fn build(&self, app_: &mut App) {
         app_.init_resource::<cursor::CursorRaycast>()
-            .add_systems(OnEnter(MainMenuState::Editor), face::build_block_face_gizmo)
+            .add_systems(OnEnter(GameState::Editor), face::build_block_face_gizmo)
             .add_systems(
                 Update,
                 (
@@ -25,8 +25,12 @@ impl Plugin for GizmosPlugin {
             )
             .configure_sets(
                 Update,
-                GizmoSystemSets::BlockFaceGizmo
-                    .after_ignore_deferred(GizmoSystemSets::UpdateCursor),
+                (
+                    GizmoSystemSets::UpdateCursor.run_if(in_state(EditorWindowState::MapEditor)),
+                    GizmoSystemSets::BlockFaceGizmo
+                        .after_ignore_deferred(GizmoSystemSets::UpdateCursor)
+                        .run_if(in_state(EditorWindowState::MapEditor)),
+                ),
             );
 
         embedded_asset!(app_, "block_face.glb");

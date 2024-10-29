@@ -3,7 +3,7 @@
 use bevy::prelude::*;
 
 use crate::gizmos::GizmoSystemSets;
-use crate::ui::menu::MainMenuState;
+use crate::ui::{EditorWindowState, GameState};
 
 pub mod placement;
 pub mod startup;
@@ -13,7 +13,7 @@ pub mod startup;
 pub struct MapEditorPlugin;
 impl Plugin for MapEditorPlugin {
     fn build(&self, app_: &mut App) {
-        app_.add_systems(OnEnter(MainMenuState::Editor), startup::prepare_map_editor)
+        app_.add_systems(OnEnter(GameState::Editor), startup::prepare_map_editor)
             .add_systems(
                 Update,
                 (
@@ -25,10 +25,12 @@ impl Plugin for MapEditorPlugin {
                 Update,
                 (
                     MapEditorSystemSets::RemoveBlock
-                        .after_ignore_deferred(GizmoSystemSets::UpdateCursor),
+                        .after_ignore_deferred(GizmoSystemSets::UpdateCursor)
+                        .run_if(in_state(EditorWindowState::MapEditor)),
                     MapEditorSystemSets::PlaceBlock
                         .after_ignore_deferred(GizmoSystemSets::UpdateCursor)
-                        .after_ignore_deferred(MapEditorSystemSets::RemoveBlock),
+                        .after_ignore_deferred(MapEditorSystemSets::RemoveBlock)
+                        .run_if(in_state(EditorWindowState::MapEditor)),
                 ),
             );
     }

@@ -4,7 +4,7 @@ use bevy::input::mouse::{MouseMotion, MouseWheel};
 use bevy::prelude::*;
 use bevy::render::camera::ScalingMode;
 
-use crate::ui::menu::MainMenuState;
+use crate::ui::GameState;
 
 /// The distance from the camera to the clipping plane. (In both directions)
 pub const CAMERA_CLIP_DIST: f32 = 500.0;
@@ -42,7 +42,7 @@ impl Plugin for CameraPlugin {
                 Update,
                 CameraSystemSets::Controls
                     .before_ignore_deferred(CameraSystemSets::Smoothing)
-                    .run_if(MainMenuState::is_in_game),
+                    .run_if(GameState::is_playing),
             );
     }
 }

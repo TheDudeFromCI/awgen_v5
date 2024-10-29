@@ -4,7 +4,7 @@ use bevy::asset::embedded_asset;
 use bevy::prelude::*;
 use resource::Hotbar;
 
-use super::menu::MainMenuState;
+use crate::ui::{EditorWindowState, GameState};
 
 pub mod resource;
 pub mod systems;
@@ -27,11 +27,11 @@ impl Plugin for UiHotbarPlugin {
     fn build(&self, app_: &mut App) {
         app_.init_resource::<Hotbar>()
             .add_systems(
-                OnEnter(MainMenuState::Editor),
+                OnEnter(GameState::Editor),
                 systems::setup_hotbar
                     .before_ignore_deferred(crate::map::editor::startup::prepare_map_editor),
             )
-            .add_systems(OnExit(MainMenuState::Editor), systems::cleanup_hotbar)
+            .add_systems(OnExit(GameState::Editor), systems::cleanup_hotbar)
             .add_systems(
                 Update,
                 (
@@ -45,13 +45,15 @@ impl Plugin for UiHotbarPlugin {
             .configure_sets(
                 Update,
                 (
-                    HotbarSystems::SelectSlot.run_if(in_state(MainMenuState::Editor)),
+                    HotbarSystems::SelectSlot
+                        .run_if(in_state(GameState::Editor))
+                        .run_if(in_state(EditorWindowState::MapEditor)),
                     HotbarSystems::UpdateSlotLogic
-                        .run_if(in_state(MainMenuState::Editor))
+                        .run_if(in_state(GameState::Editor))
                         .run_if(resource_changed::<Hotbar>)
                         .after_ignore_deferred(HotbarSystems::SelectSlot),
                     HotbarSystems::UpdateSlotVisuals
-                        .run_if(in_state(MainMenuState::Editor))
+                        .run_if(in_state(GameState::Editor))
                         .run_if(resource_changed::<Hotbar>)
                         .after_ignore_deferred(HotbarSystems::UpdateSlotLogic),
                 ),

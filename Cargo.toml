@@ -7,8 +7,8 @@ authors = ["TheDudeFromCI <thedudefromci@gmail.com>"]
 
 [dependencies]
 bevy = "0.14"
-bevy_mod_picking = "0.20.1"
-bevy_obj = "0.14.0"
+bevy_egui = "0.30.0"
+bevy_mod_picking = { version = "0.20.1", features = ["backend_egui"] }
 bitflags = "2.6.0"
 clap = { version = "4", features = ["derive"] }
 itertools = "0.13.0"
@@ -23,3 +23,6 @@ editor = []
 
 [profile.release]
 strip = true
+
+[profile.dev.package."*"]
+opt-level = 3
