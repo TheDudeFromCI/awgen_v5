@@ -5,12 +5,18 @@ use bevy::prelude::*;
 use bevy_egui::EguiContexts;
 use bevy_egui::egui::{self, Color32, Frame};
 
-use super::preview::BlockPreviewWidget;
+use super::preview::{BlockPreviewElement, BlockPreviewWidget};
 use crate::ui::EditorWindowState;
 
 /// Builds the Block Editor UI screen.
-pub fn build(block_preview_widget: Res<BlockPreviewWidget>, mut contexts: EguiContexts) {
+pub fn build(
+    mut block_preview_widget: ResMut<BlockPreviewWidget>,
+    mut contexts: EguiContexts,
+    mut block_preview_camera: Query<&mut Transform, (With<Camera>, With<BlockPreviewElement>)>,
+) {
     let block_preview_texture_id = contexts.image_id(&block_preview_widget.handle).unwrap();
+    let mut block_preview_camera_transform = block_preview_camera.single_mut();
+
     let ctx = contexts.ctx_mut();
 
     egui::SidePanel::left("block_list_panel")
@@ -38,10 +44,18 @@ pub fn build(block_preview_widget: Res<BlockPreviewWidget>, mut contexts: EguiCo
         ui.label("This is the Block Editor UI screen.");
 
         let block_preview_size = block_preview_widget.size as f32;
-        ui.image(egui::load::SizedTexture::new(
-            block_preview_texture_id,
-            egui::vec2(block_preview_size, block_preview_size),
-        ));
+        let block_preview_response = ui
+            .image(egui::load::SizedTexture::new(
+                block_preview_texture_id,
+                egui::vec2(block_preview_size, block_preview_size),
+            ))
+            .interact(egui::Sense::drag());
+
+        let cam_rot = block_preview_response.drag_delta();
+        if cam_rot != egui::Vec2::ZERO {
+            block_preview_widget.rotate(-cam_rot.x, -cam_rot.y);
+            block_preview_camera_transform.rotation = block_preview_widget.get_rotation();
+        }
     });
 }
 

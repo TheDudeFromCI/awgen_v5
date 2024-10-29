@@ -25,6 +25,9 @@ pub const BLOCK_PREVIEW_SIZE: u32 = 128;
 /// add a percentage of padding around the block preview.
 pub const BLOCK_PREVIEW_SCALE: f32 = 1.1;
 
+/// The sensitivity of the drag input used to rotate the block preview camera.
+pub const DRAG_SENSITIVITY: f32 = 0.5;
+
 /// This is a marker component used to indicate that the entity is used to
 /// render block previews in the Block Editor UI.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash, Component)]
@@ -40,6 +43,23 @@ pub struct BlockPreviewWidget {
 
     /// The current image pixel size.
     pub size: u32,
+
+    /// The local rotation euler angles of the camera. Measured in radians.
+    pub rotation: Vec2,
+}
+
+impl BlockPreviewWidget {
+    /// Rotates the camera by the given pitch and yaw angles.
+    pub fn rotate(&mut self, pitch: f32, yaw: f32) {
+        trace!("Block preview camera rotation: {pitch}, {yaw}");
+        self.rotation.x += pitch.to_radians() * DRAG_SENSITIVITY;
+        self.rotation.y += yaw.to_radians() * DRAG_SENSITIVITY;
+    }
+
+    /// Returns the current rotation of the camera as a quaternion.
+    pub fn get_rotation(&self) -> Quat {
+        Quat::from_euler(EulerRot::YXZ, self.rotation.x, self.rotation.y, 0.0)
+    }
 }
 
 /// This system prepares the camera for rendering block previews in the Block
@@ -77,10 +97,12 @@ pub fn prepare_camera(
 
     let image_handle = images.add(image);
     egui_textures.add_image(image_handle.clone());
-    commands.insert_resource(BlockPreviewWidget {
+
+    let widget = BlockPreviewWidget {
         handle: image_handle.clone(),
         size: BLOCK_PREVIEW_SIZE,
-    });
+        rotation: Vec2::new(45f32.to_radians(), -45f32.to_radians()),
+    };
 
     // light source
     commands.spawn((
@@ -119,12 +141,7 @@ pub fn prepare_camera(
                 ..default()
             }
             .into(),
-            transform: Transform::from_rotation(Quat::from_euler(
-                EulerRot::YXZ,
-                45f32.to_radians(),
-                -45f32.to_radians(),
-                0.0,
-            )),
+            transform: Transform::from_rotation(widget.get_rotation()),
             ..default()
         },
     ));
@@ -141,6 +158,8 @@ pub fn prepare_camera(
             ..default()
         },
     ));
+
+    commands.insert_resource(widget);
 }
 
 /// This system cleans up the camera used to render block previews in the Block
