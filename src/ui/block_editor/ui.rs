@@ -5,10 +5,12 @@ use bevy::prelude::*;
 use bevy_egui::EguiContexts;
 use bevy_egui::egui::{self, Color32, Frame};
 
+use super::preview::BlockPreviewWidget;
 use crate::ui::EditorWindowState;
 
 /// Builds the Block Editor UI screen.
-pub fn build(mut contexts: EguiContexts) {
+pub fn build(block_preview_widget: Res<BlockPreviewWidget>, mut contexts: EguiContexts) {
+    let block_preview_texture_id = contexts.image_id(&block_preview_widget.handle).unwrap();
     let ctx = contexts.ctx_mut();
 
     egui::SidePanel::left("block_list_panel")
@@ -34,6 +36,12 @@ pub fn build(mut contexts: EguiContexts) {
     egui::CentralPanel::default().show(ctx, |ui| {
         ui.heading("Grass Block");
         ui.label("This is the Block Editor UI screen.");
+
+        let block_preview_size = block_preview_widget.size as f32;
+        ui.image(egui::load::SizedTexture::new(
+            block_preview_texture_id,
+            egui::vec2(block_preview_size, block_preview_size),
+        ));
     });
 }
 
