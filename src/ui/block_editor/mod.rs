@@ -26,6 +26,13 @@ impl Plugin for BlockEditorUiPlugin {
                 ui::close
                     .run_if(in_state(GameState::Editor))
                     .run_if(in_state(EditorWindowState::BlockEditor)),
+                preview::update_selected_block
+                    .run_if(in_state(GameState::Editor))
+                    .run_if(in_state(EditorWindowState::BlockEditor))
+                    .run_if(
+                        resource_exists::<preview::BlockPreviewWidget>
+                            .and_then(resource_changed::<preview::BlockPreviewWidget>),
+                    ),
             ),
         )
         .add_systems(OnEnter(GameState::Editor), preview::prepare_camera)

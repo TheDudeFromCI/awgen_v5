@@ -10,6 +10,9 @@ pub mod shape;
 pub mod systems;
 pub mod tileset;
 
+/// The name of the air block, the default block type for empty space.
+pub const AIR_BLOCK_NAME: &str = "Air";
+
 /// This plugin adds functionality for working with various block types and
 /// their properties.
 pub struct BlocksPlugin;

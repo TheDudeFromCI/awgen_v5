@@ -13,11 +13,11 @@ use bevy::render::render_resource::{
 use bevy::render::view::RenderLayers;
 use bevy_egui::EguiUserTextures;
 
-use crate::blocks::RenderedBlock;
 use crate::blocks::params::BlockFinder;
+use crate::blocks::{AIR_BLOCK_NAME, RenderedBlock};
 
 /// The default image size for the block preview widget in the Block Editor UI.
-pub const BLOCK_PREVIEW_SIZE: u32 = 128;
+pub const BLOCK_PREVIEW_SIZE: u32 = 300;
 
 /// The scale factor used to render block previews in the Block Editor UI. A
 /// scale factor of 1.0 indicates that the block preview will exactly large
@@ -33,6 +33,11 @@ pub const DRAG_SENSITIVITY: f32 = 0.5;
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash, Component)]
 pub struct BlockPreviewElement;
 
+/// This is a marker component used to indicate that the entity is the block
+/// model that is previewed in the Block Editor UI.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash, Component)]
+pub struct BlockPreviewModel;
+
 /// This resource contains information about the block preview widget used in
 /// the Block Editor UI screen. This resource may not exist when the game is not
 /// in the Editor game state.
@@ -46,6 +51,9 @@ pub struct BlockPreviewWidget {
 
     /// The local rotation euler angles of the camera. Measured in radians.
     pub rotation: Vec2,
+
+    /// The currently active block entity.
+    pub active_block: Entity,
 }
 
 impl BlockPreviewWidget {
@@ -77,6 +85,7 @@ pub fn prepare_camera(
     };
 
     let background_color = Color::srgb(0.5, 0.5, 0.5);
+    let air_id = block_finger.find(AIR_BLOCK_NAME).unwrap();
 
     let mut image = Image {
         texture_descriptor: TextureDescriptor {
@@ -102,57 +111,63 @@ pub fn prepare_camera(
         handle: image_handle.clone(),
         size: BLOCK_PREVIEW_SIZE,
         rotation: Vec2::new(45f32.to_radians(), -45f32.to_radians()),
+        active_block: air_id,
     };
 
-    // light source
-    commands.spawn((
-        BlockPreviewElement,
-        RenderLayers::layer(2),
-        DirectionalLightBundle {
-            transform: Transform::from_rotation(Quat::from_euler(
-                EulerRot::XYZ,
-                67.5f32.to_radians(),
-                22.5f32.to_radians(),
-                0f32.to_radians(),
-            )),
-            ..default()
-        },
-    ));
-
     // camera
-    commands.spawn((
-        BlockPreviewElement,
-        RenderLayers::layer(2),
-        Camera3dBundle {
-            camera: Camera {
-                order: 1,
-                clear_color: background_color.into(),
-                target: RenderTarget::Image(image_handle),
+    commands
+        .spawn((
+            BlockPreviewElement,
+            RenderLayers::layer(2),
+            Camera3dBundle {
+                camera: Camera {
+                    order: 1,
+                    clear_color: background_color.into(),
+                    target: RenderTarget::Image(image_handle),
+                    ..default()
+                },
+                projection: OrthographicProjection {
+                    near: -10.0,
+                    far: 10.0,
+                    scaling_mode: ScalingMode::Fixed {
+                        width: 3f32.sqrt() * BLOCK_PREVIEW_SCALE,
+                        height: 3f32.sqrt() * BLOCK_PREVIEW_SCALE,
+                    },
+                    viewport_origin: Vec2::new(0.5, 0.5),
+                    ..default()
+                }
+                .into(),
+                transform: Transform::from_rotation(widget.get_rotation()),
                 ..default()
             },
-            projection: OrthographicProjection {
-                near: -10.0,
-                far: 10.0,
-                scaling_mode: ScalingMode::Fixed {
-                    width: 3f32.sqrt() * BLOCK_PREVIEW_SCALE,
-                    height: 3f32.sqrt() * BLOCK_PREVIEW_SCALE,
+        ))
+        .with_children(|parent| {
+            // light source
+            parent.spawn((
+                BlockPreviewElement,
+                RenderLayers::layer(2),
+                DirectionalLightBundle {
+                    directional_light: DirectionalLight {
+                        illuminance: light_consts::lux::FULL_DAYLIGHT,
+                        ..default()
+                    },
+                    transform: Transform::from_rotation(Quat::from_euler(
+                        EulerRot::XYZ,
+                        -30f32.to_radians(),
+                        30f32.to_radians(),
+                        0f32.to_radians(),
+                    )),
+                    ..default()
                 },
-                viewport_origin: Vec2::new(0.5, 0.5),
-                ..default()
-            }
-            .into(),
-            transform: Transform::from_rotation(widget.get_rotation()),
-            ..default()
-        },
-    ));
+            ));
+        });
 
     // block
     commands.spawn((
         BlockPreviewElement,
+        BlockPreviewModel,
         RenderLayers::layer(2),
-        RenderedBlock {
-            block: block_finger.find("grass").unwrap(),
-        },
+        RenderedBlock { block: air_id },
         PbrBundle {
             transform: Transform::from_translation(Vec3::splat(-0.5)),
             ..default()
@@ -194,4 +209,14 @@ pub fn disable_camera(mut camera: Query<&mut Camera, With<BlockPreviewElement>>)
         return;
     };
     cam.is_active = false;
+}
+
+/// This system is called when the active block is changed in the Block Editor
+/// UI screen. This will update the block preview widget with the new model.
+pub fn update_selected_block(
+    preview_widget: Res<BlockPreviewWidget>,
+    mut model: Query<&mut RenderedBlock, With<BlockPreviewModel>>,
+) {
+    let mut rendered_block = model.single_mut();
+    rendered_block.block = preview_widget.active_block;
 }

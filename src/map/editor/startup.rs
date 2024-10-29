@@ -4,6 +4,7 @@
 
 use bevy::prelude::*;
 
+use crate::blocks::AIR_BLOCK_NAME;
 use crate::blocks::params::BlockFinder;
 use crate::map::chunk::ChunkData;
 use crate::map::world::VoxelWorldCommands;
@@ -29,11 +30,11 @@ pub fn prepare_map_editor(
     });
     ambient_light.brightness = 1000.0;
 
-    let air = block_finder.find("air").unwrap();
-    let grass = block_finder.find("grass").unwrap();
-    let dirt = block_finder.find("dirt").unwrap();
-    let debug = block_finder.find("debug").unwrap();
-    let sign1 = block_finder.find("sign1").unwrap();
+    let air = block_finder.find(AIR_BLOCK_NAME).unwrap();
+    let grass = block_finder.find("Grass").unwrap();
+    let dirt = block_finder.find("Dirt").unwrap();
+    let debug = block_finder.find("Debug").unwrap();
+    let sign1 = block_finder.find("Sign 1").unwrap();
 
     let mut chunk_data = ChunkData::fill(air);
     for x in 0 .. CHUNK_SIZE {

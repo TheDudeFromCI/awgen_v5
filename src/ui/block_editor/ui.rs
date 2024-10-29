@@ -3,9 +3,10 @@
 
 use bevy::prelude::*;
 use bevy_egui::EguiContexts;
-use bevy_egui::egui::{self, Color32, Frame};
+use bevy_egui::egui::{self, Color32, Frame, RichText};
 
 use super::preview::{BlockPreviewElement, BlockPreviewWidget};
+use crate::blocks::Block;
 use crate::ui::EditorWindowState;
 
 /// Builds the Block Editor UI screen.
@@ -13,6 +14,7 @@ pub fn build(
     mut block_preview_widget: ResMut<BlockPreviewWidget>,
     mut contexts: EguiContexts,
     mut block_preview_camera: Query<&mut Transform, (With<Camera>, With<BlockPreviewElement>)>,
+    blocks: Query<(Entity, &Name), With<Block>>,
 ) {
     let block_preview_texture_id = contexts.image_id(&block_preview_widget.handle).unwrap();
     let mut block_preview_camera_transform = block_preview_camera.single_mut();
@@ -33,14 +35,21 @@ pub fn build(
                 .show(ui, |ui| {
                     ui.set_width(ui.available_width());
 
-                    for i in 0 .. 100 {
-                        ui.label(format!("Block {}", i));
+                    let block_list = blocks.iter().sort_by::<&Name>(|a, b| a.cmp(b));
+                    for (block_id, name) in block_list {
+                        ui.selectable_value(
+                            &mut block_preview_widget.active_block,
+                            block_id,
+                            RichText::new(name).monospace().size(20.0),
+                        );
                     }
                 });
         });
 
     egui::CentralPanel::default().show(ctx, |ui| {
-        ui.heading("Grass Block");
+        let (_, name) = blocks.get(block_preview_widget.active_block).unwrap();
+
+        ui.heading(&**name);
         ui.label("This is the Block Editor UI screen.");
 
         let block_preview_size = block_preview_widget.size as f32;

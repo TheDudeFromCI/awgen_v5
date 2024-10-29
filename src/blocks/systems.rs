@@ -10,7 +10,7 @@ use super::model::BlockModel;
 use super::occlusion::OccludedBy;
 use super::shape::{BlockFace, BlockShape};
 use super::tileset::{TilePos, Tileset};
-use super::{Block, RenderedBlock};
+use super::{AIR_BLOCK_NAME, Block, RenderedBlock};
 use crate::blocks::mesh::BlockMeshPart;
 use crate::math::{FaceDirection, FaceRotation};
 use crate::utilities::meshbuf::MeshBuf;
@@ -338,14 +338,14 @@ pub fn load_blocks(mut commands: Commands) {
 
     commands.spawn((
         Block,
-        Name::new("air"),
+        Name::new(AIR_BLOCK_NAME),
         BlockModel::default(),
         BlockShape::None,
     ));
 
     commands.spawn((
         Block,
-        Name::new("grass"),
+        Name::new("Grass"),
         BlockModel::default(),
         BlockShape::Cube {
             tileset: "overworld".to_string(),
@@ -378,7 +378,7 @@ pub fn load_blocks(mut commands: Commands) {
 
     commands.spawn((
         Block,
-        Name::new("dirt"),
+        Name::new("Dirt"),
         BlockModel::default(),
         BlockShape::Cube {
             tileset: "overworld".to_string(),
@@ -411,7 +411,7 @@ pub fn load_blocks(mut commands: Commands) {
 
     commands.spawn((
         Block,
-        Name::new("debug"),
+        Name::new("Debug"),
         BlockModel::default(),
         BlockShape::Cube {
             tileset: "overworld".to_string(),
@@ -444,7 +444,7 @@ pub fn load_blocks(mut commands: Commands) {
 
     commands.spawn((
         Block,
-        Name::new("sign1"),
+        Name::new("Sign 1"),
         BlockModel::default(),
         BlockShape::Custom {
             asset: "sign1".to_string(),
