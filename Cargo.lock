@@ -371,6 +371,7 @@ dependencies = [
  "sqlite",
  "thiserror",
  "tinyvec",
+ "uuid",
 ]
 
 [[package]]

@@ -5,7 +5,6 @@ use bevy::prelude::*;
 use bevy_mod_picking::events::{Click, Pointer};
 use bevy_mod_picking::prelude::PointerButton;
 
-use crate::blocks::AIR_BLOCK_NAME;
 use crate::blocks::params::BlockFinder;
 use crate::gizmos::cursor::CursorRaycast;
 use crate::map::ChunkCollider;
@@ -48,7 +47,7 @@ pub fn place_block(
             return;
         };
 
-        let air_block = block_finder.find(AIR_BLOCK_NAME).unwrap();
+        let air_block = block_finder.find_air();
         let target_pos = hit.block.shift(hit.face, 1);
 
         let Some(chunk_id) = world.get_chunk(target_pos.into()) else {
@@ -116,7 +115,7 @@ pub fn remove_block(
             return;
         };
 
-        let air_block = block_finder.find(AIR_BLOCK_NAME).unwrap();
+        let air_block = block_finder.find_air();
 
         trace!("Removing block at position: {}", hit.block);
         let dirty = chunk.set(hit.block, air_block);

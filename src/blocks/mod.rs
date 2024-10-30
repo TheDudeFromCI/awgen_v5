@@ -1,6 +1,7 @@
 //! This module handles the implementation for the blocks in the game.
 
 use bevy::prelude::*;
+use uuid::Uuid;
 
 pub mod mesh;
 pub mod model;
@@ -12,6 +13,9 @@ pub mod tileset;
 
 /// The name of the air block, the default block type for empty space.
 pub const AIR_BLOCK_NAME: &str = "Air";
+
+/// The UUID of the air block, the default block type for empty space.
+pub const AIR_BLOCK_UUID: Uuid = Uuid::from_u128(0);
 
 /// This plugin adds functionality for working with various block types and
 /// their properties.
@@ -32,9 +36,12 @@ impl Plugin for BlocksPlugin {
     }
 }
 
-/// A marker component that defines an entity as a block type definition.
+/// A component that defines an entity as a block type definition.
 #[derive(Debug, Default, Component)]
-pub struct Block;
+pub struct Block {
+    /// The unique identifier for this block type.
+    pub uuid: Uuid,
+}
 
 /// This component can be used to indicate a standalone [`PbrBundle`] entity
 /// that reads model data from a block entity.

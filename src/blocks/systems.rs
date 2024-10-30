@@ -4,13 +4,14 @@ use bevy::gltf::{GltfMesh, GltfNode};
 use bevy::math::Vec3A;
 use bevy::math::bounding::Aabb3d;
 use bevy::prelude::*;
+use uuid::Uuid;
 
 use super::mesh::{BlockMesh, BlockVertex};
 use super::model::BlockModel;
 use super::occlusion::OccludedBy;
 use super::shape::{BlockFace, BlockShape};
 use super::tileset::{TilePos, Tileset};
-use super::{AIR_BLOCK_NAME, Block, RenderedBlock};
+use super::{AIR_BLOCK_NAME, AIR_BLOCK_UUID, Block, RenderedBlock};
 use crate::blocks::mesh::BlockMeshPart;
 use crate::math::{FaceDirection, FaceRotation};
 use crate::utilities::meshbuf::MeshBuf;
@@ -337,14 +338,18 @@ pub fn load_blocks(mut commands: Commands) {
     // TODO: Load blocks from a file or database.
 
     commands.spawn((
-        Block,
+        Block {
+            uuid: AIR_BLOCK_UUID,
+        },
         Name::new(AIR_BLOCK_NAME),
         BlockModel::default(),
         BlockShape::None,
     ));
 
     commands.spawn((
-        Block,
+        Block {
+            uuid: Uuid::new_v4(),
+        },
         Name::new("Grass"),
         BlockModel::default(),
         BlockShape::Cube {
@@ -377,7 +382,9 @@ pub fn load_blocks(mut commands: Commands) {
     ));
 
     commands.spawn((
-        Block,
+        Block {
+            uuid: Uuid::new_v4(),
+        },
         Name::new("Dirt"),
         BlockModel::default(),
         BlockShape::Cube {
@@ -410,7 +417,9 @@ pub fn load_blocks(mut commands: Commands) {
     ));
 
     commands.spawn((
-        Block,
+        Block {
+            uuid: Uuid::new_v4(),
+        },
         Name::new("Debug"),
         BlockModel::default(),
         BlockShape::Cube {
@@ -443,7 +452,9 @@ pub fn load_blocks(mut commands: Commands) {
     ));
 
     commands.spawn((
-        Block,
+        Block {
+            uuid: Uuid::new_v4(),
+        },
         Name::new("Sign 1"),
         BlockModel::default(),
         BlockShape::Custom {

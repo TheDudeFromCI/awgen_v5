@@ -13,8 +13,8 @@ use bevy::render::render_resource::{
 use bevy::render::view::RenderLayers;
 use bevy_egui::EguiUserTextures;
 
+use crate::blocks::RenderedBlock;
 use crate::blocks::params::BlockFinder;
-use crate::blocks::{AIR_BLOCK_NAME, RenderedBlock};
 
 /// The default image size for the block preview widget in the Block Editor UI.
 pub const BLOCK_PREVIEW_SIZE: u32 = 300;
@@ -85,7 +85,7 @@ pub fn prepare_camera(
     };
 
     let background_color = Color::srgb(0.5, 0.5, 0.5);
-    let air_id = block_finger.find(AIR_BLOCK_NAME).unwrap();
+    let air_id = block_finger.find_air();
 
     let mut image = Image {
         texture_descriptor: TextureDescriptor {
