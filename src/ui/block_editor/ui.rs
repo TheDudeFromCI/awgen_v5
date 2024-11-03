@@ -3,19 +3,21 @@
 
 use bevy::prelude::*;
 use bevy_egui::EguiContexts;
-use bevy_egui::egui::{self, Color32, Frame, RichText};
+use bevy_egui::egui::{self, Color32, Frame, Margin, Rounding, Stroke};
 
 use super::preview::{BlockPreviewElement, BlockPreviewWidget};
-use crate::blocks::Block;
+use super::temp::{BlockEditHelper, Popup};
 use crate::ui::EditorWindowState;
 
 /// Builds the Block Editor UI screen.
-pub fn build(
+pub fn render(
+    mut block_edit_helper: BlockEditHelper,
     mut block_preview_widget: ResMut<BlockPreviewWidget>,
     mut contexts: EguiContexts,
     mut block_preview_camera: Query<&mut Transform, (With<Camera>, With<BlockPreviewElement>)>,
-    blocks: Query<(Entity, &Name), With<Block>>,
 ) {
+    block_edit_helper.initialize();
+
     let block_preview_texture_id = contexts.image_id(&block_preview_widget.handle).unwrap();
     let mut block_preview_camera_transform = block_preview_camera.single_mut();
 
@@ -30,42 +32,89 @@ pub fn build(
             ..default()
         })
         .show(ctx, |ui| {
+            if block_edit_helper.is_popup_open() {
+                ui.disable();
+            }
+
             egui::ScrollArea::vertical()
                 .id_salt("block_list_scroll")
                 .show(ui, |ui| {
                     ui.set_width(ui.available_width());
-
-                    let block_list = blocks.iter().sort_by::<&Name>(|a, b| a.cmp(b));
-                    for (block_id, name) in block_list {
-                        ui.selectable_value(
-                            &mut block_preview_widget.active_block,
-                            block_id,
-                            RichText::new(name).monospace().size(20.0),
-                        );
-                    }
+                    block_edit_helper.edit_block_list(ui);
                 });
         });
 
-    egui::CentralPanel::default().show(ctx, |ui| {
-        let (_, name) = blocks.get(block_preview_widget.active_block).unwrap();
+    let main_panel_rect = egui::CentralPanel::default()
+        .show(ctx, |ui| {
+            if block_edit_helper.is_popup_open() {
+                ui.disable();
+            }
 
-        ui.heading(&**name);
-        ui.label("This is the Block Editor UI screen.");
+            block_edit_helper.edit_name(ui);
 
-        let block_preview_size = block_preview_widget.size as f32;
-        let block_preview_response = ui
-            .image(egui::load::SizedTexture::new(
-                block_preview_texture_id,
-                egui::vec2(block_preview_size, block_preview_size),
-            ))
-            .interact(egui::Sense::drag());
+            let block_preview_size = block_preview_widget.size as f32;
+            let block_preview_response = ui
+                .image(egui::load::SizedTexture::new(
+                    block_preview_texture_id,
+                    egui::vec2(block_preview_size, block_preview_size),
+                ))
+                .interact(egui::Sense::drag());
 
-        let cam_rot = block_preview_response.drag_delta();
-        if cam_rot != egui::Vec2::ZERO {
-            block_preview_widget.rotate(-cam_rot.x, -cam_rot.y);
-            block_preview_camera_transform.rotation = block_preview_widget.get_rotation();
+            let cam_rot = block_preview_response.drag_delta();
+            if cam_rot != egui::Vec2::ZERO {
+                block_preview_widget.rotate(-cam_rot.x, -cam_rot.y);
+                block_preview_camera_transform.rotation = block_preview_widget.get_rotation();
+            }
+        })
+        .response
+        .rect;
+
+    let popup_size = (250.0, 100.0);
+    let popup_pos = main_panel_rect.center() - egui::vec2(popup_size.0 / 2.0, popup_size.1 / 2.0);
+
+    match block_edit_helper.get_popup() {
+        Popup::None => {}
+
+        Popup::UnsavedChanges { new_block } => {
+            egui::Window::new("Unsaved Changes")
+                .resizable(false)
+                .collapsible(false)
+                .title_bar(false)
+                .fixed_size(popup_size)
+                .default_pos(popup_pos)
+                .frame(Frame {
+                    inner_margin: Margin::same(10.0),
+                    fill: Color32::from_gray(35),
+                    rounding: Rounding::same(6.0),
+                    stroke: Stroke {
+                        width: 3.0,
+                        color: Color32::from_gray(100),
+                    },
+                    ..default()
+                })
+                .show(ctx, |ui| {
+                    ui.heading("Warning");
+                    ui.label("You have unsaved changes. Do you want to save them?");
+
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::BOTTOM), |ui| {
+                        ui.set_row_height(ui.available_height());
+
+                        if ui.button("Discard").clicked() {
+                            block_edit_helper.select_block(new_block);
+                            block_edit_helper.close_popup();
+                        }
+
+                        if ui.button("Save").clicked() {
+                            block_edit_helper.save_block();
+                            block_edit_helper.select_block(new_block);
+                            block_edit_helper.close_popup();
+                        }
+                    });
+                });
         }
-    });
+    }
+
+    block_preview_widget.active_block = block_edit_helper.selected_block();
 }
 
 /// This system transitions to the Block Editor UI screen.

@@ -23,7 +23,7 @@ pub const BLOCK_PREVIEW_SIZE: u32 = 300;
 /// scale factor of 1.0 indicates that the block preview will exactly large
 /// enough to fit a block at a isometric angle. A value greater than 1.0 will
 /// add a percentage of padding around the block preview.
-pub const BLOCK_PREVIEW_SCALE: f32 = 1.1;
+pub const BLOCK_PREVIEW_SCALE: f32 = 1.5;
 
 /// The sensitivity of the drag input used to rotate the block preview camera.
 pub const DRAG_SENSITIVITY: f32 = 0.5;

@@ -5,6 +5,7 @@ use bevy::prelude::*;
 use super::{EditorWindowState, GameState};
 
 pub mod preview;
+pub mod temp;
 pub mod ui;
 
 /// The plugin that adds the Block Editor UI systems and components to the app.
@@ -14,7 +15,7 @@ impl Plugin for BlockEditorUiPlugin {
         app_.add_systems(
             Update,
             (
-                ui::build
+                ui::render
                     .after_ignore_deferred(ui::open)
                     .after_ignore_deferred(ui::close)
                     .run_if(in_state(GameState::Editor))
