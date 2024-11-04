@@ -1,11 +1,12 @@
 //! This module implements the Block Editor UI screen within the editor mode.
 
+use bevy::asset::embedded_asset;
 use bevy::prelude::*;
 
 use super::{EditorWindowState, GameState};
 
+pub mod helper;
 pub mod preview;
-pub mod temp;
 pub mod ui;
 
 /// The plugin that adds the Block Editor UI systems and components to the app.
@@ -27,13 +28,17 @@ impl Plugin for BlockEditorUiPlugin {
                 ui::close
                     .run_if(in_state(GameState::Editor))
                     .run_if(in_state(EditorWindowState::BlockEditor)),
-                preview::update_selected_block
+                preview::update_preview
+                    .after_ignore_deferred(ui::render)
+                    .after_ignore_deferred(preview::update_face_hover)
                     .run_if(in_state(GameState::Editor))
                     .run_if(in_state(EditorWindowState::BlockEditor))
-                    .run_if(
-                        resource_exists::<preview::BlockPreviewWidget>
-                            .and_then(resource_changed::<preview::BlockPreviewWidget>),
-                    ),
+                    .run_if(resource_exists::<preview::BlockPreviewWidget>),
+                preview::update_gizmo_render_layer,
+                preview::update_face_hover
+                    .run_if(in_state(GameState::Editor))
+                    .run_if(in_state(EditorWindowState::BlockEditor))
+                    .run_if(resource_exists::<preview::BlockPreviewWidget>),
             ),
         )
         .add_systems(OnEnter(GameState::Editor), preview::prepare_camera)
@@ -46,5 +51,7 @@ impl Plugin for BlockEditorUiPlugin {
             OnExit(EditorWindowState::BlockEditor),
             preview::disable_camera,
         );
+
+        embedded_asset!(app_, "block_face_rotation.glb");
     }
 }

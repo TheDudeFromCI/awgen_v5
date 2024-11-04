@@ -5,21 +5,19 @@ use bevy::prelude::*;
 use bevy_egui::EguiContexts;
 use bevy_egui::egui::{self, Color32, Frame, Margin, Rounding, Stroke};
 
-use super::preview::{BlockPreviewElement, BlockPreviewWidget};
-use super::temp::{BlockEditHelper, Popup};
+use super::helper::{BlockEditHelper, Popup};
+use super::preview::BlockPreviewWidget;
 use crate::ui::EditorWindowState;
 
 /// Builds the Block Editor UI screen.
 pub fn render(
     mut block_edit_helper: BlockEditHelper,
-    mut block_preview_widget: ResMut<BlockPreviewWidget>,
+    mut preview_widget: ResMut<BlockPreviewWidget>,
     mut contexts: EguiContexts,
-    mut block_preview_camera: Query<&mut Transform, (With<Camera>, With<BlockPreviewElement>)>,
 ) {
     block_edit_helper.initialize();
 
-    let block_preview_texture_id = contexts.image_id(&block_preview_widget.handle).unwrap();
-    let mut block_preview_camera_transform = block_preview_camera.single_mut();
+    let block_preview_texture_id = contexts.image_id(&preview_widget.get_handle()).unwrap();
 
     let ctx = contexts.ctx_mut();
 
@@ -44,6 +42,28 @@ pub fn render(
                 });
         });
 
+    egui::SidePanel::right("tileset_panel")
+        .default_width(200.0)
+        .min_width(100.0)
+        .resizable(true)
+        .frame(Frame {
+            fill: Color32::from_gray(20),
+            ..default()
+        })
+        .show(ctx, |ui| {
+            if block_edit_helper.is_popup_open() {
+                ui.disable();
+            }
+
+            egui::ScrollArea::vertical()
+                .id_salt("block_list_scroll")
+                .show(ui, |ui| {
+                    ui.set_width(ui.available_width());
+
+                    // TODO: Render tileset here.
+                });
+        });
+
     let main_panel_rect = egui::CentralPanel::default()
         .show(ctx, |ui| {
             if block_edit_helper.is_popup_open() {
@@ -52,18 +72,33 @@ pub fn render(
 
             block_edit_helper.edit_name(ui);
 
-            let block_preview_size = block_preview_widget.size as f32;
-            let block_preview_response = ui
-                .image(egui::load::SizedTexture::new(
-                    block_preview_texture_id,
-                    egui::vec2(block_preview_size, block_preview_size),
-                ))
-                .interact(egui::Sense::drag());
+            let preview_size = preview_widget.get_size() as f32;
+            let block_preview_response = ui.image(egui::load::SizedTexture::new(
+                block_preview_texture_id,
+                egui::vec2(preview_size, preview_size),
+            ));
 
-            let cam_rot = block_preview_response.drag_delta();
-            if cam_rot != egui::Vec2::ZERO {
-                block_preview_widget.rotate(-cam_rot.x, -cam_rot.y);
-                block_preview_camera_transform.rotation = block_preview_widget.get_rotation();
+            let cam_rot = block_preview_response
+                .interact(egui::Sense::drag())
+                .drag_delta();
+            preview_widget.rotate(-cam_rot.x, -cam_rot.y);
+
+            preview_widget.set_mouse_pos(
+                block_preview_response
+                    .interact(egui::Sense::hover())
+                    .hover_pos()
+                    .map(|pos| pos - block_preview_response.rect.min)
+                    .map(|pos| Vec2::new(pos.x, pos.y))
+                    .unwrap_or_default(),
+            );
+
+            if block_preview_response
+                .interact(egui::Sense::click())
+                .clicked()
+            {
+                let face = preview_widget.get_hovered_face();
+                preview_widget.set_selected_face(face);
+                debug!("Selected face: {:?}", face);
             }
         })
         .response
@@ -114,7 +149,7 @@ pub fn render(
         }
     }
 
-    block_preview_widget.active_block = block_edit_helper.selected_block();
+    preview_widget.set_active_block(block_edit_helper.selected_block());
 }
 
 /// This system transitions to the Block Editor UI screen.
@@ -130,10 +165,16 @@ pub fn open(
 
 /// This system closes the Block Editor UI screen and returns to the Map Editor.
 pub fn close(
+    block_edit_helper: BlockEditHelper,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut editor_window_state: ResMut<NextState<EditorWindowState>>,
 ) {
     if keyboard_input.just_pressed(KeyCode::F1) || keyboard_input.just_pressed(KeyCode::Escape) {
+        if block_edit_helper.is_popup_open() {
+            // Do not close the window if a popup is open.
+            return;
+        }
+
         editor_window_state.set(EditorWindowState::MapEditor);
         info!("Closed Block Editor UI window.");
     }

@@ -122,6 +122,8 @@ impl<'w, 's> BlockEditHelper<'w, 's> {
         let (_, mut name, _) = self.blocks.get_mut(self.data.entity).unwrap();
         name.set(self.data.name.clone());
         self.data.dirty = false;
+
+        info!("Saving block data for: {}", *name);
     }
 
     /// Closes the current popup, if any.

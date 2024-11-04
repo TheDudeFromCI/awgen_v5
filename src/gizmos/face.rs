@@ -9,7 +9,7 @@ use bevy_mod_picking::prelude::Pickable;
 
 use super::cursor::CursorRaycast;
 
-/// The asset path to the Wraithaven Games splash screen icon.
+/// The asset path to the block face gizmo model.
 pub const GIZMO_FACE_MODEL: &str = "embedded://awgen/gizmos/block_face.glb";
 
 /// A marker component that indicates the entity is a block face gizmo model.

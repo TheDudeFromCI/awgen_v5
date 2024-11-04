@@ -10,6 +10,7 @@ use bevy::log::LogPlugin;
 use bevy::prelude::*;
 use bevy::window::WindowMode;
 use bevy_egui::EguiPlugin;
+use bevy_framepace::{FramepacePlugin, FramepaceSettings, Limiter};
 use bevy_mod_picking::DefaultPickingPlugins;
 use clap::Parser;
 use settings::ProjectSettings;
@@ -162,7 +163,7 @@ fn main() -> impl Termination {
                     ..default()
                 }),
         )
-        .add_plugins((DefaultPickingPlugins, EguiPlugin))
+        .add_plugins((DefaultPickingPlugins, EguiPlugin, FramepacePlugin))
         .add_plugins((
             camera::CameraPlugin,
             ui::AwgenUIPlugin,
@@ -170,5 +171,8 @@ fn main() -> impl Termination {
             map::VoxelWorldPlugin,
             gizmos::GizmosPlugin,
         ))
+        .add_systems(Startup, |mut settings: ResMut<FramepaceSettings>| {
+            settings.limiter = Limiter::from_framerate(60.0);
+        })
         .run()
 }

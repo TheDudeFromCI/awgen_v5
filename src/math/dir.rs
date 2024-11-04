@@ -112,6 +112,58 @@ impl FaceDirection {
             FaceDirection::West => euler(0.0, -half, 0.0),
         }
     }
+
+    /// This function attempts to create a `FaceDirection` from a normal vector.
+    /// The returned value is based off the closest cardinal direction to the
+    /// given normal vector, based on the dot product of the normal vector with
+    /// each cardinal direction.
+    ///
+    /// This function returns `None` if the input normal vector is zero.
+    #[inline(always)]
+    pub fn from_normal(normal: Vec3) -> Option<Self> {
+        let norm = normal.try_normalize()?;
+
+        let north = norm.dot(Vec3::NEG_Z);
+        let south = norm.dot(Vec3::Z);
+        let up = norm.dot(Vec3::Y);
+        let down = norm.dot(Vec3::NEG_Y);
+        let east = norm.dot(Vec3::X);
+        let west = norm.dot(Vec3::NEG_X);
+
+        let mut best = FaceDirection::Up;
+        let mut best_dot = -100.0;
+
+        if north > best_dot {
+            best = FaceDirection::North;
+            best_dot = north;
+        }
+
+        if south > best_dot {
+            best = FaceDirection::South;
+            best_dot = south;
+        }
+
+        if up > best_dot {
+            best = FaceDirection::Up;
+            best_dot = up;
+        }
+
+        if down > best_dot {
+            best = FaceDirection::Down;
+            best_dot = down;
+        }
+
+        if east > best_dot {
+            best = FaceDirection::East;
+            best_dot = east;
+        }
+
+        if west > best_dot {
+            best = FaceDirection::West;
+        }
+
+        Some(best)
+    }
 }
 
 impl From<FaceDirection> for IVec3 {
