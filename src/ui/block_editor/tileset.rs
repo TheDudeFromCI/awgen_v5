@@ -84,6 +84,12 @@ impl<'w, 's> TileListWidget<'w, 's> {
         let (_, _, _, image) = self.tilesets.get(self.data.tileset).unwrap();
         image
     }
+
+    /// Gets the name of the currently selected tileset.
+    pub fn get_tileset_name(&self) -> &Name {
+        let (_, name, _, _) = self.tilesets.get(self.data.tileset).unwrap();
+        name
+    }
 }
 
 /// A simple EGUI widget that renders a single tile in the tileset.

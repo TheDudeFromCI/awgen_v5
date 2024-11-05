@@ -5,8 +5,10 @@ use bevy::ecs::system::SystemParam;
 use bevy::prelude::*;
 use bevy_egui::egui::{self, FontFamily, FontId, RichText};
 
+use crate::blocks::shape::{BlockFace, BlockShape};
 use crate::blocks::tileset::Tileset;
 use crate::blocks::{AIR_BLOCK_UUID, Block};
+use crate::math::FaceDirection;
 
 /// The data structure that holds the temporary block data that is being edited.
 pub struct BlockEditData {
@@ -41,7 +43,17 @@ pub struct BlockEditHelper<'w, 's> {
     data: Local<'s, BlockEditData>,
 
     /// The query that fetches all blocks.
-    blocks: Query<'w, 's, (Entity, &'static mut Name, &'static Block), Without<Tileset>>,
+    blocks: Query<
+        'w,
+        's,
+        (
+            Entity,
+            &'static mut Name,
+            &'static Block,
+            &'static mut BlockShape,
+        ),
+        Without<Tileset>,
+    >,
 }
 
 impl<'w, 's> BlockEditHelper<'w, 's> {
@@ -55,8 +67,8 @@ impl<'w, 's> BlockEditHelper<'w, 's> {
         let air = self
             .blocks
             .iter()
-            .find(|(_, _, block)| block.uuid == AIR_BLOCK_UUID)
-            .map(|(entity, _, _)| entity)
+            .find(|(_, _, block, _)| block.uuid == AIR_BLOCK_UUID)
+            .map(|(entity, _, _, _)| entity)
             .unwrap();
 
         self.select_block(air);
@@ -67,7 +79,7 @@ impl<'w, 's> BlockEditHelper<'w, 's> {
         let block_list = self.blocks.iter().sort_by::<&Name>(|a, b| a.cmp(b));
 
         let mut sel_block = self.data.entity;
-        for (block_id, name, _) in block_list {
+        for (block_id, name, _, _) in block_list {
             ui.selectable_value(
                 &mut sel_block,
                 block_id,
@@ -97,7 +109,7 @@ impl<'w, 's> BlockEditHelper<'w, 's> {
         self.data.entity = block;
         self.data.dirty = false;
 
-        let (_, name, _) = self.blocks.get(block).unwrap();
+        let (_, name, _, _) = self.blocks.get(block).unwrap();
         self.data.name = name.as_str().to_string();
     }
 
@@ -120,7 +132,7 @@ impl<'w, 's> BlockEditHelper<'w, 's> {
 
     /// Saves the current block data.
     pub fn save_block(&mut self) {
-        let (_, mut name, _) = self.blocks.get_mut(self.data.entity).unwrap();
+        let (_, mut name, _, _) = self.blocks.get_mut(self.data.entity).unwrap();
         name.set(self.data.name.clone());
         self.data.dirty = false;
 
@@ -140,6 +152,41 @@ impl<'w, 's> BlockEditHelper<'w, 's> {
     /// Returns the currently selected block.
     pub fn selected_block(&self) -> Entity {
         self.data.entity
+    }
+
+    /// This function updates the face of a block in the block editor.
+    pub fn update_block_face(
+        &mut self,
+        dir: FaceDirection,
+        new_tileset: impl Into<String>,
+        face: BlockFace,
+    ) {
+        let (_, _, _, mut shape) = self.blocks.get_mut(self.data.entity).unwrap();
+
+        let BlockShape::Cube {
+            tileset,
+            top,
+            bottom,
+            north,
+            south,
+            east,
+            west,
+        } = &mut *shape
+        else {
+            return;
+        };
+
+        *tileset = new_tileset.into();
+        match dir {
+            FaceDirection::Up => *top = face,
+            FaceDirection::Down => *bottom = face,
+            FaceDirection::North => *north = face,
+            FaceDirection::South => *south = face,
+            FaceDirection::East => *east = face,
+            FaceDirection::West => *west = face,
+        }
+
+        self.data.dirty = true;
     }
 }
 

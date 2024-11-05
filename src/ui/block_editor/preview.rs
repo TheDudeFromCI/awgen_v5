@@ -110,6 +110,11 @@ impl BlockPreviewWidget {
     }
 
     /// Returns the currently selected face of the block, if any.
+    pub fn get_selected_face(&self) -> Option<FaceDirection> {
+        self.selected_face
+    }
+
+    /// Returns the currently selected face of the block, if any.
     pub fn get_hovered_face(&self) -> Option<FaceDirection> {
         self.hover_face
     }

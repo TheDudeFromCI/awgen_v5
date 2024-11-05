@@ -8,6 +8,7 @@ use bevy_egui::egui::{self, Color32, Frame, Margin, Rounding, Stroke};
 use super::helper::{BlockEditHelper, Popup};
 use super::preview::BlockPreviewWidget;
 use super::tileset::{TileListWidget, TileWidget};
+use crate::blocks::shape::BlockFace;
 use crate::blocks::tileset::{TILESET_LENGTH, TilePos};
 use crate::ui::EditorWindowState;
 
@@ -87,11 +88,27 @@ pub fn render(
                                 let mut i = 0;
                                 for y in 0 .. TILESET_LENGTH as u8 {
                                     for x in 0 .. TILESET_LENGTH as u8 {
-                                        ui.add(TileWidget {
-                                            texture: tile_list_texture_id,
-                                            tile_pos: TilePos::new(x, y),
-                                            size: tile_size,
-                                        });
+                                        if ui
+                                            .add(TileWidget {
+                                                texture: tile_list_texture_id,
+                                                tile_pos: TilePos::new(x, y),
+                                                size: tile_size,
+                                            })
+                                            .interact(egui::Sense::click())
+                                            .clicked()
+                                        {
+                                            if let Some(dir) = preview_widget.get_selected_face() {
+                                                let name = tile_list_widget.get_tileset_name();
+                                                block_edit_helper.update_block_face(
+                                                    dir,
+                                                    name,
+                                                    BlockFace {
+                                                        tile: TilePos::new(x, y),
+                                                        ..default()
+                                                    },
+                                                );
+                                            }
+                                        }
 
                                         i += 1;
                                         if i % columns == 0 {
