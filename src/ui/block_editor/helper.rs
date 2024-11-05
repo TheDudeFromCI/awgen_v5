@@ -5,6 +5,7 @@ use bevy::ecs::system::SystemParam;
 use bevy::prelude::*;
 use bevy_egui::egui::{self, FontFamily, FontId, RichText};
 
+use crate::blocks::tileset::Tileset;
 use crate::blocks::{AIR_BLOCK_UUID, Block};
 
 /// The data structure that holds the temporary block data that is being edited.
@@ -40,7 +41,7 @@ pub struct BlockEditHelper<'w, 's> {
     data: Local<'s, BlockEditData>,
 
     /// The query that fetches all blocks.
-    blocks: Query<'w, 's, (Entity, &'static mut Name, &'static Block)>,
+    blocks: Query<'w, 's, (Entity, &'static mut Name, &'static Block), Without<Tileset>>,
 }
 
 impl<'w, 's> BlockEditHelper<'w, 's> {

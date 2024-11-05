@@ -1,5 +1,6 @@
 //! This module handles the implementation for the blocks in the game.
 
+use bevy::asset::embedded_asset;
 use bevy::prelude::*;
 use uuid::Uuid;
 
@@ -33,14 +34,26 @@ impl Plugin for BlocksPlugin {
             ),
         )
         .add_systems(Startup, (systems::load_blocks, tileset::load_tilesets));
+
+        embedded_asset!(app_, "prototype.png");
     }
 }
 
 /// A component that defines an entity as a block type definition.
-#[derive(Debug, Default, Component)]
+///
+/// When creating a default block, the UUID is generated randomly.
+#[derive(Debug, Component)]
 pub struct Block {
     /// The unique identifier for this block type.
     pub uuid: Uuid,
+}
+
+impl Default for Block {
+    fn default() -> Self {
+        Self {
+            uuid: Uuid::new_v4(),
+        }
+    }
 }
 
 /// This component can be used to indicate a standalone [`PbrBundle`] entity

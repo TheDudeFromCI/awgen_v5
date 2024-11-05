@@ -7,6 +7,7 @@ use super::{EditorWindowState, GameState};
 
 pub mod helper;
 pub mod preview;
+pub mod tileset;
 pub mod ui;
 
 /// The plugin that adds the Block Editor UI systems and components to the app.

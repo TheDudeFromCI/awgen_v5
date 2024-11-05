@@ -3,6 +3,7 @@
 use bevy::prelude::*;
 use bevy::render::texture::{ImageLoaderSettings, ImageSampler};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 /// The total number of tiles in a tileset across one axis.
 ///
@@ -10,9 +11,31 @@ use serde::{Deserialize, Serialize};
 /// tiles in a 2D grid.
 pub const TILESET_LENGTH: usize = 16;
 
+/// The name of the prototype tileset, the default tileset used for testing.
+pub const PROTOTYPE_TILESET_NAME: &str = "Prototype";
+
+/// The UUID of the prototype tileset, the default tileset used for testing.
+pub const PROTOTYPE_TILESET_UUID: Uuid = Uuid::from_u128(0);
+
+/// The asset path to the prototype tileset image.
+pub const PROTOTYPE_TILESET_PATH: &str = "embedded://awgen/blocks/prototype.png";
+
 /// A marker component that defines an entity as a tileset definition.
-#[derive(Debug, Default, Component)]
-pub struct Tileset;
+///
+/// When creating a default tileset, the UUID is generated randomly.
+#[derive(Debug, Component)]
+pub struct Tileset {
+    /// The unique identifier for this tileset.
+    pub uuid: Uuid,
+}
+
+impl Default for Tileset {
+    fn default() -> Self {
+        Self {
+            uuid: Uuid::new_v4(),
+        }
+    }
+}
 
 /// A bundle that defines the components of a tileset.
 #[derive(Debug, Default, Bundle)]
@@ -76,6 +99,27 @@ pub fn load_tilesets(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut commands: Commands,
 ) {
+    // prototype tileset
+    let tileset_image = asset_server.load_with_settings(
+        PROTOTYPE_TILESET_PATH,
+        |settings: &mut ImageLoaderSettings| {
+            settings.sampler = ImageSampler::nearest();
+        },
+    );
+    commands.spawn(TilesetBundle {
+        tileset: Tileset {
+            uuid: PROTOTYPE_TILESET_UUID,
+        },
+        name: Name::new(PROTOTYPE_TILESET_NAME),
+        image: tileset_image.clone(),
+        material: materials.add(StandardMaterial {
+            base_color_texture: Some(tileset_image),
+            perceptual_roughness: 1.0,
+            ..default()
+        }),
+        ..default()
+    });
+
     load_tileset(&asset_server, &mut materials, &mut commands, "overworld");
 }
 

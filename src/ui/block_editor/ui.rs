@@ -7,17 +7,24 @@ use bevy_egui::egui::{self, Color32, Frame, Margin, Rounding, Stroke};
 
 use super::helper::{BlockEditHelper, Popup};
 use super::preview::BlockPreviewWidget;
+use super::tileset::{TileListWidget, TileWidget};
+use crate::blocks::tileset::{TILESET_LENGTH, TilePos};
 use crate::ui::EditorWindowState;
 
 /// Builds the Block Editor UI screen.
 pub fn render(
+    mut tile_list_widget: TileListWidget,
     mut block_edit_helper: BlockEditHelper,
     mut preview_widget: ResMut<BlockPreviewWidget>,
     mut contexts: EguiContexts,
 ) {
     block_edit_helper.initialize();
+    tile_list_widget.initialize(&mut contexts);
 
     let block_preview_texture_id = contexts.image_id(&preview_widget.get_handle()).unwrap();
+    let tile_list_texture_id = contexts
+        .image_id(tile_list_widget.get_tileset_handle())
+        .unwrap();
 
     let ctx = contexts.ctx_mut();
 
@@ -43,9 +50,7 @@ pub fn render(
         });
 
     egui::SidePanel::right("tileset_panel")
-        .default_width(200.0)
-        .min_width(100.0)
-        .resizable(true)
+        .resizable(false)
         .frame(Frame {
             fill: Color32::from_gray(20),
             ..default()
@@ -55,12 +60,47 @@ pub fn render(
                 ui.disable();
             }
 
-            egui::ScrollArea::vertical()
-                .id_salt("block_list_scroll")
-                .show(ui, |ui| {
-                    ui.set_width(ui.available_width());
+            let tile_size = 64.0;
+            let columns = 6;
 
-                    // TODO: Render tileset here.
+            egui::ScrollArea::vertical()
+                .id_salt("tileset_scroll")
+                .show(ui, |ui| {
+                    egui::Frame {
+                        inner_margin: Margin {
+                            left: 5.0,
+                            right: 15.0,
+                            top: 5.0,
+                            bottom: 5.0,
+                        },
+                        ..default()
+                    }
+                    .show(ui, |ui| {
+                        egui::Grid::new("tileset_grid")
+                            .num_columns(columns)
+                            .spacing((2.0, 2.0))
+                            .min_col_width(tile_size)
+                            .max_col_width(tile_size)
+                            .min_row_height(tile_size)
+                            .striped(true)
+                            .show(ui, |ui| {
+                                let mut i = 0;
+                                for y in 0 .. TILESET_LENGTH as u8 {
+                                    for x in 0 .. TILESET_LENGTH as u8 {
+                                        ui.add(TileWidget {
+                                            texture: tile_list_texture_id,
+                                            tile_pos: TilePos::new(x, y),
+                                            size: tile_size,
+                                        });
+
+                                        i += 1;
+                                        if i % columns == 0 {
+                                            ui.end_row();
+                                        }
+                                    }
+                                }
+                            });
+                    });
                 });
         });
 

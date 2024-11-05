@@ -13,6 +13,7 @@
     "Aabb",
     "Awgen",
     "egui",
+    "epaint",
     "Gltf",
     "numkeys",
     "overworld",
