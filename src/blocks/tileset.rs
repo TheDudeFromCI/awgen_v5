@@ -117,7 +117,6 @@ pub fn load_tilesets(
             perceptual_roughness: 1.0,
             ..default()
         }),
-        ..default()
     });
 
     load_tileset(&asset_server, &mut materials, &mut commands, "overworld");

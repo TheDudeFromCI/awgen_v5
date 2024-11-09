@@ -7,25 +7,20 @@ use bevy_egui::egui::{self, Color32, Frame, Margin, Rounding, Stroke};
 
 use super::helper::{BlockEditHelper, Popup};
 use super::preview::BlockPreviewWidget;
-use super::tileset::{TileListWidget, TileWidget};
-use crate::blocks::shape::BlockFace;
-use crate::blocks::tileset::{TILESET_LENGTH, TilePos};
 use crate::ui::EditorWindowState;
 
 /// Builds the Block Editor UI screen.
 pub fn render(
-    mut tile_list_widget: TileListWidget,
     mut block_edit_helper: BlockEditHelper,
     mut preview_widget: ResMut<BlockPreviewWidget>,
     mut contexts: EguiContexts,
 ) {
-    block_edit_helper.initialize();
-    tile_list_widget.initialize(&mut contexts);
+    block_edit_helper.initialize(&mut contexts);
 
     let block_preview_texture_id = contexts.image_id(&preview_widget.get_handle()).unwrap();
-    let tile_list_texture_id = contexts
-        .image_id(tile_list_widget.get_tileset_handle())
-        .unwrap();
+    let tile_list_texture_id = block_edit_helper
+        .get_selected_tileset_image()
+        .map(|handle| contexts.image_id(handle).unwrap());
 
     let ctx = contexts.ctx_mut();
 
@@ -61,8 +56,7 @@ pub fn render(
                 ui.disable();
             }
 
-            let tile_size = 64.0;
-            let columns = 6;
+            block_edit_helper.tileset_list_combobox(ui);
 
             egui::ScrollArea::vertical()
                 .id_salt("tileset_scroll")
@@ -77,46 +71,8 @@ pub fn render(
                         ..default()
                     }
                     .show(ui, |ui| {
-                        egui::Grid::new("tileset_grid")
-                            .num_columns(columns)
-                            .spacing((2.0, 2.0))
-                            .min_col_width(tile_size)
-                            .max_col_width(tile_size)
-                            .min_row_height(tile_size)
-                            .striped(true)
-                            .show(ui, |ui| {
-                                let mut i = 0;
-                                for y in 0 .. TILESET_LENGTH as u8 {
-                                    for x in 0 .. TILESET_LENGTH as u8 {
-                                        if ui
-                                            .add(TileWidget {
-                                                texture: tile_list_texture_id,
-                                                tile_pos: TilePos::new(x, y),
-                                                size: tile_size,
-                                            })
-                                            .interact(egui::Sense::click())
-                                            .clicked()
-                                        {
-                                            if let Some(dir) = preview_widget.get_selected_face() {
-                                                let name = tile_list_widget.get_tileset_name();
-                                                block_edit_helper.update_block_face(
-                                                    dir,
-                                                    name,
-                                                    BlockFace {
-                                                        tile: TilePos::new(x, y),
-                                                        ..default()
-                                                    },
-                                                );
-                                            }
-                                        }
-
-                                        i += 1;
-                                        if i % columns == 0 {
-                                            ui.end_row();
-                                        }
-                                    }
-                                }
-                            });
+                        let selected_face = preview_widget.get_selected_face();
+                        block_edit_helper.tile_list(ui, tile_list_texture_id, selected_face);
                     });
                 });
         });
