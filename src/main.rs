@@ -6,6 +6,7 @@
 use std::path::PathBuf;
 use std::process::Termination;
 
+use bevy::asset::io::AssetSourceBuilder;
 use bevy::log::LogPlugin;
 use bevy::prelude::*;
 use bevy::window::WindowMode;
@@ -13,6 +14,7 @@ use bevy_egui::EguiPlugin;
 use bevy_framepace::{FramepacePlugin, FramepaceSettings, Limiter};
 use bevy_mod_picking::DefaultPickingPlugins;
 use clap::Parser;
+use logic::LogicPluginSettings;
 use settings::ProjectSettings;
 
 mod blocks;
@@ -144,6 +146,13 @@ fn main() -> impl Termination {
     App::new()
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(settings)
+        .insert_resource(LogicPluginSettings {
+            script_path: format!("{}/scripts", asset_folder).into(),
+        })
+        .register_asset_source(
+            "project",
+            AssetSourceBuilder::platform_default(&asset_folder, None),
+        )
         .add_plugins(
             DefaultPlugins
                 .set(WindowPlugin {
@@ -157,10 +166,6 @@ fn main() -> impl Termination {
                 .set(LogPlugin {
                     level: log_level,
                     filter: "wgpu=error,naga=warn,calloop=debug,polling=debug".to_string(),
-                    ..default()
-                })
-                .set(AssetPlugin {
-                    file_path: asset_folder,
                     ..default()
                 }),
         )

@@ -181,7 +181,7 @@ pub fn update_block_model(
                 };
             }
             BlockShape::Custom { asset } => {
-                let model_path = format!("models/{asset}.glb");
+                let model_path = format!("project://models/{asset}.glb");
                 let default_mat = GltfAssetLabel::DefaultMaterial.from_asset(model_path.clone());
 
                 *model = BlockModel::Custom {

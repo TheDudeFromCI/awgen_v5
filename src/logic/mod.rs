@@ -2,11 +2,15 @@
 //! logic is received through the JavaScript runtime, which is then translated
 //! into commands and executed on the game state.
 
+use std::fs::File;
+use std::io::BufReader;
+use std::path::{Path, PathBuf};
 use std::rc::Rc;
 
 use bevy::prelude::*;
 use boa_engine::context::ContextBuilder;
-use boa_engine::{Context, NativeFunction, Source, js_string};
+use boa_engine::module::SimpleModuleLoader;
+use boa_engine::{Context, Module, NativeFunction, Source, js_string};
 use messages::{LogicInput, LogicOutput};
 use queue::{ScriptEngineJobQueue, ScriptEngineShutdown};
 use smol::LocalExecutor;
@@ -22,12 +26,28 @@ pub mod queue;
 /// the scripting engine, which is used to run the game's logic.
 pub struct LogicPlugin;
 impl Plugin for LogicPlugin {
-    fn build(&self, _app: &mut App) {
-        _app.add_systems(OnEnter(GameState::Editor), begin_loop)
+    fn build(&self, app_: &mut App) {
+        app_.init_resource::<LogicPluginSettings>()
+            .add_systems(OnEnter(GameState::Editor), begin_loop)
             .add_systems(
                 OnExit(GameState::Editor),
                 close_loop.run_if(resource_exists::<LogicMessageChannels>),
             );
+    }
+}
+
+/// The logic plugin settings resource.
+#[derive(Debug, Resource)]
+pub struct LogicPluginSettings {
+    /// The path to the script source folder.
+    pub script_path: PathBuf,
+}
+
+impl Default for LogicPluginSettings {
+    fn default() -> Self {
+        Self {
+            script_path: Path::new("./scripts").to_path_buf(),
+        }
     }
 }
 
@@ -72,7 +92,7 @@ impl LogicMessageChannels {
 /// This system is called when the game state is set to the editor. It begins
 /// the logic loop, which is responsible for running the game's logic in a
 /// background thread.
-fn begin_loop(mut commands: Commands) {
+fn begin_loop(settings: Res<LogicPluginSettings>, mut commands: Commands) {
     let (logic_in_send, logic_in_recv) = channel::unbounded();
     let (logic_out_send, logic_out_recv) = channel::unbounded();
     let shutdown = ScriptEngineShutdown::new();
@@ -83,9 +103,13 @@ fn begin_loop(mut commands: Commands) {
         shutdown: shutdown.clone(),
     });
 
-    std::thread::spawn(move || {
-        logic_loop(logic_out_send, logic_in_recv, shutdown);
-    });
+    let script_path = settings.script_path.clone();
+    std::thread::Builder::new()
+        .name("ScriptEngine".to_string())
+        .spawn(move || {
+            logic_loop(script_path, logic_out_send, logic_in_recv, shutdown);
+        })
+        .unwrap();
 }
 
 /// This system is called when the game state is set to something other than the
@@ -100,14 +124,18 @@ fn close_loop(channels: Res<LogicMessageChannels>, mut commands: Commands) {
 /// game's logic. It receives messages from the main Bevy systems and sends
 /// messages back to them to execute commands.
 fn logic_loop(
+    path: PathBuf,
     send: Sender<LogicOutput>,
     receive: Receiver<LogicInput>,
     shutdown: ScriptEngineShutdown,
 ) {
     let executor = LocalExecutor::new();
     let queue = ScriptEngineJobQueue::new(executor, shutdown);
+    let module_loader = Rc::new(SimpleModuleLoader::new(path.clone()).unwrap());
+
     let mut context = ContextBuilder::new()
         .job_queue(Rc::new(queue))
+        .module_loader(module_loader.clone())
         .build()
         .unwrap();
 
@@ -117,18 +145,17 @@ fn logic_loop(
 
     register(c, "print", 1, fn_ptr(api::print));
     register(c, "sleep", 1, async_fn_ptr(api::sleep));
-    register(c, "query", 0, api::channels::build_query(receive));
-    register(c, "send", 1, api::channels::build_send(send));
+    register(c, "NATIVE_QUERY", 0, api::channels::build_query(receive));
+    register(c, "NATIVE_SEND", 1, api::channels::build_send(send));
 
-    let script = r#"
-        sleep(100).then(() => print("B"));
-        sleep(10000).then(() => print("D"));
-        sleep(1000).then(() => print("C"));
-        print("A");
-    "#;
+    let main_file = path.clone().canonicalize().unwrap().join("main.mjs");
+    let relative_path = Path::new("./main.mjs");
+    let file_reader = BufReader::new(File::open(&main_file).unwrap());
+    let source = Source::from_reader(file_reader, Some(relative_path));
+    let module = Module::parse(source, None, &mut context).unwrap();
+    module_loader.insert(main_file, module.clone());
 
-    let source = Source::from_bytes(script);
-    context.eval(source).unwrap();
+    module.load_link_evaluate(&mut context);
     context.run_jobs();
 }
 

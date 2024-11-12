@@ -130,7 +130,7 @@ fn load_tileset(
     name: &str,
 ) {
     let tileset_image = asset_server.load_with_settings(
-        format!("tilesets/{name}.png"),
+        format!("project://tilesets/{name}.png"),
         |settings: &mut ImageLoaderSettings| {
             settings.sampler = ImageSampler::nearest();
         },
