@@ -18,6 +18,7 @@ use settings::ProjectSettings;
 mod blocks;
 mod camera;
 mod gizmos;
+mod logic;
 mod map;
 mod math;
 mod settings;
@@ -170,6 +171,7 @@ fn main() -> impl Termination {
             blocks::BlocksPlugin,
             map::VoxelWorldPlugin,
             gizmos::GizmosPlugin,
+            logic::LogicPlugin,
         ))
         .add_systems(Startup, |mut settings: ResMut<FramepaceSettings>| {
             settings.limiter = Limiter::from_framerate(60.0);
