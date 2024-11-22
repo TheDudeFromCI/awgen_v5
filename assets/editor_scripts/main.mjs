@@ -1,7 +1,5 @@
 import { GameAPI } from "./api.mjs"
 
-print("Starting AwgenScript Editor engine.")
-
 let api = new GameAPI();
 
 api.once("engine_started", async () => {
