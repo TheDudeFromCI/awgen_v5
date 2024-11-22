@@ -2,8 +2,9 @@
 
 use bevy::prelude::*;
 
+use crate::gamestate::GameState;
 use crate::gizmos::GizmoSystemSets;
-use crate::ui::{EditorWindowState, GameState};
+use crate::ui::EditorWindowState;
 
 pub mod placement;
 pub mod startup;

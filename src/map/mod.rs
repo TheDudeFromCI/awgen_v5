@@ -5,6 +5,7 @@ use bevy::prelude::*;
 use world::VoxelWorld;
 
 pub mod chunk;
+#[cfg(feature = "editor")]
 pub mod editor;
 pub mod remesh;
 pub mod world;
@@ -13,8 +14,11 @@ pub mod world;
 pub struct VoxelWorldPlugin;
 impl Plugin for VoxelWorldPlugin {
     fn build(&self, app_: &mut App) {
-        app_.init_resource::<VoxelWorld>()
-            .add_plugins((remesh::ChunkRemeshPlugin, editor::MapEditorPlugin));
+        app_.init_resource::<VoxelWorld>().add_plugins((
+            remesh::ChunkRemeshPlugin,
+            #[cfg(feature = "editor")]
+            editor::MapEditorPlugin,
+        ));
     }
 }
 

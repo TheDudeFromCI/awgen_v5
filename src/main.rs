@@ -19,6 +19,7 @@ use settings::ProjectSettings;
 
 mod blocks;
 mod camera;
+mod gamestate;
 mod gizmos;
 mod logic;
 mod map;
@@ -58,9 +59,16 @@ pub const DEV_MODE: bool = cfg!(feature = "editor");
 /// The key used to store the project name in the settings file.
 pub const PROJECT_NAME_KEY: &str = "NAME";
 
+/// The default project name if none is provided.
+pub const PROJECT_NAME_DEFAULT: &str = "Untitled";
+
 /// The key used to store the project version in the settings file.
 pub const PROJECT_VERSION_KEY: &str = "VERSION";
 
+/// The default project version if none is provided.
+pub const PROJECT_VERSION_DEFAULT: &str = "0.0.1";
+
+/// The main function for the Awgen Engine.
 fn main() -> impl Termination {
     let args = Args::parse();
 
@@ -96,7 +104,7 @@ fn main() -> impl Termination {
 
     let proj_name = match settings.get(PROJECT_NAME_KEY) {
         Ok(Some(name)) => name,
-        Ok(None) => "Untitled".to_string(),
+        Ok(None) => PROJECT_NAME_DEFAULT.to_string(),
         Err(err) => {
             eprintln!("Failed to read project settings: {err}");
             std::process::exit(1);
@@ -105,7 +113,7 @@ fn main() -> impl Termination {
 
     let proj_version = match settings.get(PROJECT_VERSION_KEY) {
         Ok(Some(version)) => version,
-        Ok(None) => "0.0.1".to_string(),
+        Ok(None) => PROJECT_VERSION_DEFAULT.to_string(),
         Err(err) => {
             eprintln!("Failed to read project settings: {err}");
             std::process::exit(1);
@@ -147,8 +155,13 @@ fn main() -> impl Termination {
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(settings)
         .insert_resource(LogicPluginSettings {
-            script_path: format!("{}/scripts", asset_folder).into(),
+            editor_script_path: "./assets/editor_scripts".into(),
+            runtime_script_path: format!("{}/scripts", asset_folder).into(),
         })
+        .register_asset_source(
+            "editor",
+            AssetSourceBuilder::platform_default("assets", None),
+        )
         .register_asset_source(
             "project",
             AssetSourceBuilder::platform_default(&asset_folder, None),
@@ -178,8 +191,10 @@ fn main() -> impl Termination {
             gizmos::GizmosPlugin,
             logic::LogicPlugin,
         ))
+        .init_state::<gamestate::GameState>()
         .add_systems(Startup, |mut settings: ResMut<FramepaceSettings>| {
             settings.limiter = Limiter::from_framerate(60.0);
         })
+        .add_systems(Startup, gamestate::to_splash_screen)
         .run()
 }

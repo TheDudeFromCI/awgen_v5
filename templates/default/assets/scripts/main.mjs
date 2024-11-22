@@ -1,1 +1,1 @@
-print("Hello from AwgenShell!")
+print("Hello from AwgenScript Runtime!")

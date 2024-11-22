@@ -3,7 +3,8 @@
 use bevy::asset::embedded_asset;
 use bevy::prelude::*;
 
-use super::{EditorWindowState, GameState};
+use super::EditorWindowState;
+use crate::gamestate::GameState;
 
 pub mod helper;
 pub mod preview;

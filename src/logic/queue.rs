@@ -1,7 +1,7 @@
 //! The queue module contains the job queue implementation for the script
 //! engine. This allows for async execution of JavaScript promises and futures.
 
-use std::cell::{Cell, RefCell};
+use std::cell::RefCell;
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
 
@@ -21,7 +21,7 @@ use smol::{LocalExecutor, future};
 /// Note that triggering a shutdown does not immediately stop the script engine.
 /// Any running jobs will be allowed to finish before the engine stops, but all
 /// new jobs, or queued jobs, will be ignored.
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct ScriptEngineShutdown(Arc<Mutex<bool>>);
 
 impl ScriptEngineShutdown {
@@ -42,10 +42,7 @@ impl ScriptEngineShutdown {
 }
 
 /// The queue struct is responsible for managing the execution of jobs.
-pub struct ScriptEngineJobQueue<'a> {
-    /// The executor used to run jobs.
-    executor: LocalExecutor<'a>,
-
+pub struct ScriptEngineJobQueue {
     /// The futures that are currently running.
     futures: RefCell<FuturesUnordered<FutureJob>>,
 
@@ -56,11 +53,10 @@ pub struct ScriptEngineJobQueue<'a> {
     shutdown: ScriptEngineShutdown,
 }
 
-impl<'a> ScriptEngineJobQueue<'a> {
+impl ScriptEngineJobQueue {
     /// Creates a new queue with the given executor and communication channels.
-    pub fn new(executor: LocalExecutor<'a>, shutdown: ScriptEngineShutdown) -> Self {
+    pub fn new(shutdown: ScriptEngineShutdown) -> Self {
         Self {
-            executor,
             futures: Default::default(),
             jobs: Default::default(),
             shutdown,
@@ -68,7 +64,7 @@ impl<'a> ScriptEngineJobQueue<'a> {
     }
 }
 
-impl JobQueue for ScriptEngineJobQueue<'_> {
+impl JobQueue for ScriptEngineJobQueue {
     fn enqueue_promise_job(&self, job: NativeJob, _: &mut Context) {
         self.jobs.borrow_mut().push_back(job);
     }
@@ -78,15 +74,10 @@ impl JobQueue for ScriptEngineJobQueue<'_> {
     }
 
     fn run_jobs(&self, context: &mut Context) {
-        if self.jobs.borrow().is_empty() && self.futures.borrow().is_empty() {
-            return;
-        }
-
         let context = RefCell::new(context);
 
-        future::block_on(self.executor.run(async move {
-            let finished = Cell::new(0);
-
+        let executor = LocalExecutor::new();
+        future::block_on(executor.run(async {
             let fut_queue = async {
                 loop {
                     if self.shutdown.is_shutdown() {
@@ -94,16 +85,9 @@ impl JobQueue for ScriptEngineJobQueue<'_> {
                     }
 
                     if self.futures.borrow().is_empty() {
-                        finished.set(finished.get() | 1);
-                        if finished.get() >= 3 {
-                            return;
-                        }
-
                         future::yield_now().await;
                         continue;
                     }
-
-                    finished.set(finished.get() & 2);
 
                     let futures = &mut std::mem::take(&mut *self.futures.borrow_mut());
                     while let Some(job) = futures.next().await {
@@ -119,15 +103,9 @@ impl JobQueue for ScriptEngineJobQueue<'_> {
                     }
 
                     if self.jobs.borrow().is_empty() {
-                        finished.set(finished.get() | 2);
-                        if finished.get() >= 3 {
-                            return;
-                        }
-
                         future::yield_now().await;
                         continue;
                     };
-                    finished.set(finished.get() & 1);
 
                     let jobs = std::mem::take(&mut *self.jobs.borrow_mut());
                     for job in jobs {
