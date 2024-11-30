@@ -5,78 +5,46 @@ use std::future::Future;
 use std::time::Duration;
 
 use bevy::log::info;
-use boa_engine::{Context, JsArgs, JsResult, JsValue};
+use boa_engine::{Context, JsArgs, JsNativeError, JsResult, JsValue};
 
-/// This module implements the message channels that are used to communicate
-/// between the logic system and the game engine.
-pub mod channels {
-    use std::future::Future;
+use crate::logic::channels::{AwgenScriptReceiveChannel, AwgenScriptSendChannel};
+use crate::logic::commands::LogicCommands;
 
-    use boa_engine::{Context, JsArgs, JsNativeError, JsResult, JsValue, NativeFunction};
-    use smol::channel::{Receiver, Sender};
+/// A native async function that listens for the next incoming event from the
+/// main game.
+pub fn event(
+    _this: &JsValue,
+    _args: &[JsValue],
+    _context: &mut Context,
+) -> impl Future<Output = JsResult<JsValue>> {
+    async move {
+        let Some(message) = AwgenScriptReceiveChannel::recv().await else {
+            return Err(JsNativeError::error()
+                .with_message("Event channel has been closed.")
+                .into());
+        };
 
-    use crate::logic::channels::{AwgenScriptReceiveChannel, AwgenScriptSendChannel};
-    use crate::logic::commands::LogicCommands;
-    use crate::logic::events::LogicEvent;
+        Ok(JsValue::String(message.json().into()))
+    }
+}
 
-    /// Builds a native function that listens for the next input to the logic
-    /// system. Note that action will assign a global variable to the receiver,
-    /// which will be used to receive messages from the logic system.
-    ///
-    /// Calling this function more than once will overwrite the previous global
-    /// receiver. The previous receiver will be closed.
-    pub fn build_receive(receiver: Receiver<LogicEvent>) -> NativeFunction {
-        /// The inner function that is called when the query function is
-        /// invoked.
-        fn inner(
-            _this: &JsValue,
-            _args: &[JsValue],
-            _context: &mut Context,
-        ) -> impl Future<Output = JsResult<JsValue>> {
-            async move {
-                let Some(message) = AwgenScriptReceiveChannel::recv().await else {
-                    return Err(JsNativeError::error()
-                        .with_message("RECEIVE message channel has been closed.")
-                        .into());
-                };
+/// A native function that sends a command to the main game.
+pub fn command(_this: &JsValue, args: &[JsValue], context: &mut Context) -> JsResult<JsValue> {
+    let message = LogicCommands::from_js_value(args.get_or_undefined(0), context);
 
-                Ok(JsValue::String(message.json().into()))
-            }
-        }
+    let Some(message) = message else {
+        return Err(JsNativeError::error()
+            .with_message("Invalid message.")
+            .into());
+    };
 
-        AwgenScriptReceiveChannel::set(receiver);
-        NativeFunction::from_async_fn(inner)
+    if !AwgenScriptSendChannel::send(message) {
+        return Err(JsNativeError::error()
+            .with_message("SEND message channel has been closed.")
+            .into());
     }
 
-    /// Builds a native function that sends a message from the logic system to
-    /// Bevy. Note that action will assign a global variable to the sender,
-    /// which will be used to send messages from the logic system.
-    ///
-    /// Calling this function more than once will overwrite the previous global
-    /// receiver. The previous receiver will be closed.
-    pub fn build_send(sender: Sender<LogicCommands>) -> NativeFunction {
-        /// The inner function that is called when the send function is invoked.
-        fn inner(_this: &JsValue, args: &[JsValue], context: &mut Context) -> JsResult<JsValue> {
-            let message = LogicCommands::from_js_value(args.get_or_undefined(0), context);
-
-            let Some(message) = message else {
-                return Err(JsNativeError::error()
-                    .with_message("Invalid message.")
-                    .into());
-            };
-
-            if !AwgenScriptSendChannel::send(message) {
-                return Err(JsNativeError::error()
-                    .with_message("SEND message channel has been closed.")
-                    .into());
-            }
-
-            Ok(JsValue::undefined())
-        }
-
-        AwgenScriptSendChannel::set(sender);
-        NativeFunction::from_fn_ptr(inner)
-    }
+    Ok(JsValue::undefined())
 }
 
 /// A native function that sleeps for a given number of milliseconds.

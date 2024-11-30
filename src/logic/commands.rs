@@ -1,20 +1,23 @@
-//! This module contains the messages that can be received from the AwgenScript
+//! This module contains the commands that can be received from the AwgenScript
 //! engine.
 
 use boa_engine::{Context, JsValue};
 use serde::{Deserialize, Serialize};
 
-/// The logic output enum represents all possible outputs that can be received
-/// from the logic system.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "type")]
-pub enum LogicCommands {
-    /// A query to get the project settings.
-    #[serde(rename = "get_project_settings")]
-    GetProjectSettingsQuery,
+use super::queries::LogicQuery;
 
-    /// Update the project settings.
-    #[serde(rename = "set_project_settings")]
+/// An enum that represents all possible commands that can be received from the
+/// AwgenScript engine.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "command", rename_all = "snake_case")]
+pub enum LogicCommands {
+    /// A command that is used to query the engine for information.
+    Query {
+        /// The query to be made.
+        query: LogicQuery,
+    },
+
+    /// A command that is used to update the project settings.
     SetProjectSettings {
         /// The new name of the project.
         name: String,
@@ -25,8 +28,8 @@ pub enum LogicCommands {
 }
 
 impl LogicCommands {
-    /// Converts the output into a JavaScript value, or returns `None` if the
-    /// output cannot be converted.
+    /// Converts the given [`JsValue`] into a [`LogicCommands`] instance, if
+    /// possible. Returns `None` if the conversion fails.
     pub fn from_js_value(value: &JsValue, context: &mut Context) -> Option<Self> {
         let json = value.to_json(context).ok()?;
         serde_json::from_value(json).ok()

@@ -13,14 +13,14 @@ export class GameAPI extends EventHandler {
     super();
 
     this.on("input", async (message) => {
-      print(`Received message: ${message.type}`);
+      print(`Received message: ${message.event}`);
 
-      if (message.type === "engine_started") {
+      if (message.event === "engine_started") {
         this.emit("engine_started");
       }
 
-      if (message.type === "project_settings") {
-        this.emit("project_settings", [message.name, message.version]);
+      if (message.event === "query_response") {
+        this.emit("query_response", message);
       }
     });
   }
@@ -29,16 +29,15 @@ export class GameAPI extends EventHandler {
    * This function sends a query to the native layer of the engine. It will
    * return a promise that resolves when the query is answered by the native
    * layer.
-   * @param {string} event The event to listen for.
    * @param {string} type The type of query to send to the native layer.
    */
-  async #query(event, type) {
+  async #query(type) {
     let promise = new Promise((resolve) => {
-      this.once(event, resolve);
+      this.once("query_response", resolve);
     });
 
-    NATIVE_SEND({ type });
-    return await promise;
+    COMMAND({ command: "query", query: type });
+    return (await promise).data;
   }
 
   /**
@@ -49,7 +48,7 @@ export class GameAPI extends EventHandler {
    * project settings, as an array with the project name and version.
    */
   async getProjectSettings() {
-    return await this.#query("project_settings", "get_project_settings");
+    return await this.#query("project_settings");
   }
 
   /**
@@ -59,7 +58,7 @@ export class GameAPI extends EventHandler {
    * @param {string} version The version of the project.
    */
   setProjectSettings(name, version) {
-    NATIVE_SEND({ type: "set_project_settings", name, version });
+    COMMAND({ command: "set_project_settings", name, version });
   }
 
   /**
@@ -70,7 +69,7 @@ export class GameAPI extends EventHandler {
    */
   async run() {
     while (true) {
-      let message = JSON.parse(await NATIVE_QUERY());
+      let message = JSON.parse(await EVENT());
       await this.emit('input', message);
     }
   }
