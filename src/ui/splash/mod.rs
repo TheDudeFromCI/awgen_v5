@@ -3,7 +3,7 @@
 use bevy::asset::embedded_asset;
 use bevy::prelude::*;
 
-use super::GameState;
+use crate::gamestate::GameState;
 
 /// The asset path to the Wraithaven Games splash screen icon.
 const WHG_SPLASH_ICON: &str = "embedded://awgen/ui/splash/whg.png";
@@ -108,11 +108,10 @@ fn update_splash(
         image.color = Color::srgba(1.0, 1.0, 1.0, alpha);
 
         if seconds >= INIT_TIME + FADE_TIME + HOLD_TIME + FADE_TIME + END_TIME {
-            if crate::DEV_MODE {
-                next_state.set(GameState::Editor);
-            } else {
-                next_state.set(GameState::Player);
-            }
+            #[cfg(feature = "editor")]
+            next_state.set(GameState::Editor);
+            #[cfg(not(feature = "editor"))]
+            next_state.set(GameState::Runtime);
         }
     }
 }

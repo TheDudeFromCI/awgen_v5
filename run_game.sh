@@ -1,6 +1,6 @@
 #!/bin/bash
 
 echo "Running Awgen in gameplay mode."
-mkdir -p ./test_project
+mkdir -p ./templates/default
 
-cargo run -- --project ./test_project --fullscreen
+cargo run -- --project ./templates/default --fullscreen $@ 2>&1 | tee latest.log

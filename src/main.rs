@@ -6,6 +6,7 @@
 use std::path::PathBuf;
 use std::process::Termination;
 
+use bevy::asset::io::AssetSourceBuilder;
 use bevy::log::LogPlugin;
 use bevy::prelude::*;
 use bevy::window::WindowMode;
@@ -13,11 +14,14 @@ use bevy_egui::EguiPlugin;
 use bevy_framepace::{FramepacePlugin, FramepaceSettings, Limiter};
 use bevy_mod_picking::DefaultPickingPlugins;
 use clap::Parser;
+use logic::LogicPluginSettings;
 use settings::ProjectSettings;
 
 mod blocks;
 mod camera;
+mod gamestate;
 mod gizmos;
+mod logic;
 mod map;
 mod math;
 mod settings;
@@ -55,9 +59,16 @@ pub const DEV_MODE: bool = cfg!(feature = "editor");
 /// The key used to store the project name in the settings file.
 pub const PROJECT_NAME_KEY: &str = "NAME";
 
+/// The default project name if none is provided.
+pub const PROJECT_NAME_DEFAULT: &str = "Untitled";
+
 /// The key used to store the project version in the settings file.
 pub const PROJECT_VERSION_KEY: &str = "VERSION";
 
+/// The default project version if none is provided.
+pub const PROJECT_VERSION_DEFAULT: &str = "0.0.1";
+
+/// The main function for the Awgen Engine.
 fn main() -> impl Termination {
     let args = Args::parse();
 
@@ -93,7 +104,7 @@ fn main() -> impl Termination {
 
     let proj_name = match settings.get(PROJECT_NAME_KEY) {
         Ok(Some(name)) => name,
-        Ok(None) => "Untitled".to_string(),
+        Ok(None) => PROJECT_NAME_DEFAULT.to_string(),
         Err(err) => {
             eprintln!("Failed to read project settings: {err}");
             std::process::exit(1);
@@ -102,7 +113,7 @@ fn main() -> impl Termination {
 
     let proj_version = match settings.get(PROJECT_VERSION_KEY) {
         Ok(Some(version)) => version,
-        Ok(None) => "0.0.1".to_string(),
+        Ok(None) => PROJECT_VERSION_DEFAULT.to_string(),
         Err(err) => {
             eprintln!("Failed to read project settings: {err}");
             std::process::exit(1);
@@ -143,6 +154,18 @@ fn main() -> impl Termination {
     App::new()
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(settings)
+        .insert_resource(LogicPluginSettings {
+            editor_script_path: "./assets/editor_scripts".into(),
+            runtime_script_path: format!("{}/scripts", asset_folder).into(),
+        })
+        .register_asset_source(
+            "editor",
+            AssetSourceBuilder::platform_default("assets", None),
+        )
+        .register_asset_source(
+            "project",
+            AssetSourceBuilder::platform_default(&asset_folder, None),
+        )
         .add_plugins(
             DefaultPlugins
                 .set(WindowPlugin {
@@ -157,10 +180,6 @@ fn main() -> impl Termination {
                     level: log_level,
                     filter: "wgpu=error,naga=warn,calloop=debug,polling=debug".to_string(),
                     ..default()
-                })
-                .set(AssetPlugin {
-                    file_path: asset_folder,
-                    ..default()
                 }),
         )
         .add_plugins((DefaultPickingPlugins, EguiPlugin, FramepacePlugin))
@@ -170,9 +189,12 @@ fn main() -> impl Termination {
             blocks::BlocksPlugin,
             map::VoxelWorldPlugin,
             gizmos::GizmosPlugin,
+            logic::LogicPlugin,
         ))
+        .init_state::<gamestate::GameState>()
         .add_systems(Startup, |mut settings: ResMut<FramepaceSettings>| {
             settings.limiter = Limiter::from_framerate(60.0);
         })
+        .add_systems(Startup, gamestate::to_splash_screen)
         .run()
 }

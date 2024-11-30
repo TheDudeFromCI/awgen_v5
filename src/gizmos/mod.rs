@@ -4,7 +4,8 @@
 use bevy::asset::embedded_asset;
 use bevy::prelude::*;
 
-use crate::ui::{EditorWindowState, GameState};
+use crate::gamestate::GameState;
+use crate::ui::EditorWindowState;
 
 pub mod cursor;
 pub mod face;

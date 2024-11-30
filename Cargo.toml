@@ -11,10 +11,13 @@ bevy_egui = "0.30.0"
 bevy_framepace = "0.17.1"
 bevy_mod_picking = { version = "0.20.1", features = ["backend_egui"] }
 bitflags = "2.6.0"
+boa_engine = "0.19.1"
 clap = { version = "4", features = ["derive"] }
+futures-util = "0.3.31"
 itertools = "0.13.0"
 serde = { version = "1.0.210", features = ["derive"] }
 serde_json = "1.0.128"
+smol = "2.0.2"
 sqlite = { version = "0.36.1", features = ["bundled"] }
 thiserror = "1"
 tinyvec = { version = "1.8.0", features = ["alloc"] }
