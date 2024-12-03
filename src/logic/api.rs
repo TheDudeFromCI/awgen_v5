@@ -4,7 +4,7 @@
 use std::future::Future;
 use std::time::Duration;
 
-use bevy::log::info;
+use bevy::log::{debug, info};
 use boa_engine::{Context, JsArgs, JsNativeError, JsResult, JsValue};
 
 use crate::logic::channels::{AwgenScriptReceiveChannel, AwgenScriptSendChannel};
@@ -31,6 +31,7 @@ pub fn event(
 /// A native function that sends a command to the main game.
 pub fn command(_this: &JsValue, args: &[JsValue], context: &mut Context) -> JsResult<JsValue> {
     let message = LogicCommands::from_js_value(args.get_or_undefined(0), context);
+    debug!("Sending AwgenScript command: {:?}", message);
 
     let Some(message) = message else {
         return Err(JsNativeError::error()
@@ -64,6 +65,6 @@ pub fn sleep(
 /// A native function that prints a message to the console.
 pub fn print(_this: &JsValue, args: &[JsValue], context: &mut Context) -> JsResult<JsValue> {
     let message = args.get_or_undefined(0).to_string(context)?;
-    info!("{}", message.to_std_string_escaped());
+    info!("[AWGEN SCRIPT] {}", message.to_std_string_escaped());
     Ok(JsValue::undefined())
 }

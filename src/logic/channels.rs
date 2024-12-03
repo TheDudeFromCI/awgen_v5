@@ -41,6 +41,8 @@ impl AwgenScriptSendChannel {
             return false;
         };
 
+        // Sending blocking messages is fine here as the channels are unbounded
+        // and will always return immediately.
         if sender.send_blocking(message).is_err() {
             Self::close();
             return false;

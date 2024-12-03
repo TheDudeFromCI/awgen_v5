@@ -1,16 +1,11 @@
-import { GameAPI } from "./api.mjs"
+import { EditorAPI } from "./api.mjs"
 
-let api = new GameAPI();
+let editor = new EditorAPI();
 
-api.once("engine_started", async () => {
+editor.once("engine_started", async () => {
   print("AwgenScript Editor engine started.");
-
-  print("Updating project settings...");
-  await api.setProjectSettings("Default Project Template", "1.0.0");
-  print("Project settings updated.");
-
-  let [name, version] = await api.getProjectSettings();
-  print(`Project name: ${name}, version: ${version}`);
+  editor.settings.setName("Default Project Template");
+  editor.settings.setVersion("0.0.1");
 });
 
-await api.run();
+await editor.run();

@@ -1,6 +1,7 @@
 //! This module contains the commands that can be received from the AwgenScript
 //! engine.
 
+use bevy::log::error;
 use boa_engine::{Context, JsValue};
 use serde::{Deserialize, Serialize};
 
@@ -32,6 +33,12 @@ impl LogicCommands {
     /// possible. Returns `None` if the conversion fails.
     pub fn from_js_value(value: &JsValue, context: &mut Context) -> Option<Self> {
         let json = value.to_json(context).ok()?;
-        serde_json::from_value(json).ok()
+        match serde_json::from_value(json) {
+            Ok(command) => Some(command),
+            Err(err) => {
+                error!("Failed to parse AwgenScript command: {}", err);
+                None
+            }
+        }
     }
 }
