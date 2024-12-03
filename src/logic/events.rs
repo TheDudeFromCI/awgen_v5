@@ -1,22 +1,21 @@
 //! This module contains all the events that can be sent to the AwgenScript
 //! engine.
 
-use bevy::utils::HashMap;
 use serde::{Deserialize, Serialize};
 
 /// An enum that represents all possible events that can be sent to the
 /// AwgenScript engine.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "event", rename_all = "snake_case")]
+#[serde(tag = "event", rename_all = "camelCase")]
 pub enum LogicEvent {
     /// An event that is triggered once when the engine is first started.
-    EngineStarted,
+    /// Contains the project settings information.
+    EngineStarted {
+        /// The name of the project.
+        project_name: String,
 
-    /// An event that is triggered in response to a query from the AwgenScript
-    /// engine.
-    QueryResponse {
-        /// The query response data.
-        data: HashMap<String, String>,
+        /// The version of the project.
+        project_version: String,
     },
 }
 

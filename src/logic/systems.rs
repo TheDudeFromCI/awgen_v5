@@ -6,7 +6,6 @@ use std::path::{Path, PathBuf};
 use std::rc::Rc;
 
 use bevy::prelude::*;
-use bevy::utils::HashMap;
 use boa_engine::builtins::promise::PromiseState;
 use boa_engine::context::ContextBuilder;
 use boa_engine::module::SimpleModuleLoader;
@@ -18,7 +17,6 @@ use super::events::LogicEvent;
 use super::queue::{ScriptEngineJobQueue, ScriptEngineShutdown};
 use super::resources::AwgenScriptChannels;
 use super::{LogicPluginSettings, api};
-use crate::logic::queries::LogicQuery;
 use crate::settings::ProjectSettings;
 use crate::{PROJECT_NAME_DEFAULT, PROJECT_NAME_KEY, PROJECT_VERSION_DEFAULT, PROJECT_VERSION_KEY};
 
@@ -29,39 +27,13 @@ pub fn handle_logic_outputs(
 ) {
     while let Some(output) = channels.receive() {
         match output {
-            LogicCommands::Query { query } => {
-                debug!("Received query for: {}", query);
-                let mut data = HashMap::new();
-
-                match query {
-                    LogicQuery::ProjectSettings => {
-                        data.insert(
-                            "name".to_string(),
-                            project_settings
-                                .get(PROJECT_NAME_KEY)
-                                .unwrap()
-                                .unwrap_or_else(|| PROJECT_NAME_DEFAULT.to_string()),
-                        );
-                        data.insert(
-                            "version".to_string(),
-                            project_settings
-                                .get(PROJECT_VERSION_KEY)
-                                .unwrap()
-                                .unwrap_or_else(|| PROJECT_VERSION_DEFAULT.to_string()),
-                        );
-                    }
-                };
-
-                channels.send(LogicEvent::QueryResponse { data });
+            LogicCommands::SetProjectName { name } => {
+                info!("Updating project name: {}", name);
+                project_settings.set(PROJECT_NAME_KEY, &name).unwrap();
             }
 
-            LogicCommands::SetProjectSettings { name, version } => {
-                info!(
-                    "Updating project settings: name = {}, version = {}",
-                    name, version
-                );
-
-                project_settings.set(PROJECT_NAME_KEY, &name).unwrap();
+            LogicCommands::SetProjectVersion { version } => {
+                info!("Updating project version: {}", version);
                 project_settings.set(PROJECT_VERSION_KEY, &version).unwrap();
             }
         }
@@ -73,11 +45,13 @@ pub fn handle_logic_outputs(
 #[cfg(feature = "editor")]
 pub fn begin_editor_loop(
     settings: Res<LogicPluginSettings>,
+    project_settings: Res<ProjectSettings>,
     mut channels: ResMut<AwgenScriptChannels>,
 ) {
     begin_loop(
         settings.editor_script_path.clone(),
         "ScriptEngine-Editor".to_string(),
+        &project_settings,
         &mut channels,
     );
 }
@@ -86,11 +60,13 @@ pub fn begin_editor_loop(
 /// the channels for communication between the engine and the main game loop.
 pub fn begin_runtime_loop(
     settings: Res<LogicPluginSettings>,
+    project_settings: Res<ProjectSettings>,
     mut channels: ResMut<AwgenScriptChannels>,
 ) {
     begin_loop(
         settings.runtime_script_path.clone(),
         "ScriptEngine-Runtime".to_string(),
+        &project_settings,
         &mut channels,
     );
 }
@@ -101,6 +77,7 @@ pub fn begin_runtime_loop(
 fn begin_loop(
     script_path: PathBuf,
     thread_name: String,
+    project_settings: &Res<ProjectSettings>,
     channels: &mut ResMut<AwgenScriptChannels>,
 ) {
     let (in_send, in_recv) = smol::channel::unbounded();
@@ -117,7 +94,16 @@ fn begin_loop(
         })
         .unwrap();
 
-    channels.send(LogicEvent::EngineStarted);
+    channels.send(LogicEvent::EngineStarted {
+        project_name: project_settings
+            .get(PROJECT_NAME_KEY)
+            .unwrap()
+            .unwrap_or_else(|| PROJECT_NAME_DEFAULT.to_string()),
+        project_version: project_settings
+            .get(PROJECT_VERSION_KEY)
+            .unwrap()
+            .unwrap_or_else(|| PROJECT_VERSION_DEFAULT.to_string()),
+    });
 }
 
 /// This system closes the active AwgenScript engine thread.

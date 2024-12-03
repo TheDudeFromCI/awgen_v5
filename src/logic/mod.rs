@@ -13,7 +13,6 @@ pub mod api;
 pub mod channels;
 pub mod commands;
 pub mod events;
-pub mod queries;
 pub mod queue;
 pub mod resources;
 pub mod systems;

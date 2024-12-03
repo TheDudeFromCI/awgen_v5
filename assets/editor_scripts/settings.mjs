@@ -4,7 +4,6 @@
 export class ProjectSettings {
   #projectName = null;
   #projectVersion = null;
-  #api = null;
 
   /**
    * This constructor initializes the project settings with the given game API.
@@ -13,39 +12,10 @@ export class ProjectSettings {
    * @param {GameAPI} api The game API to use for communication with the engine.
    */
   constructor(api) {
-    this.#api = api;
-
-    api.query({ query: "project_settings" }).then((response) => {
-      if (!this.#projectName) this.#projectName = response.name;
-      if (!this.#projectVersion) this.#projectVersion = response.version;
+    api.once("engineStarted", (response) => {
+      this.#projectName = response.projectName;
+      this.#projectVersion = response.projectVersion;
     });
-  }
-
-  /**
-   * This function sends a command to the native layer of the engine to update
-   * the project settings with the given name and version. This is a private
-   * function and should not be called directly.
-   *
-   * If the project version or name is not set, it will wait for the next
-   * "project_settings" event from the engine to cache the values before sending
-   * the update command.
-   */
-  #update() {
-    if (!this.#projectName || !this.#projectVersion) {
-      this.#api.once("project_settings", () => {
-        COMMAND({
-          command: "set_project_settings",
-          name: this.#projectName,
-          version: this.#projectVersion
-        });
-      });
-    } else {
-      COMMAND({
-        command: "set_project_settings",
-        name: this.#projectName,
-        version: this.#projectVersion
-      });
-    }
   }
 
   /**
@@ -71,7 +41,10 @@ export class ProjectSettings {
    */
   setName(name) {
     this.#projectName = name;
-    this.#update();
+    COMMAND({
+      command: "setProjectName",
+      name: this.#projectName,
+    });
   }
 
   /**
@@ -81,6 +54,9 @@ export class ProjectSettings {
    */
   setVersion(version) {
     this.#projectVersion = version;
-    this.#update();
+    COMMAND({
+      command: "setProjectVersion",
+      version: this.#projectVersion,
+    });
   }
 }

@@ -5,24 +5,19 @@ use bevy::log::error;
 use boa_engine::{Context, JsValue};
 use serde::{Deserialize, Serialize};
 
-use super::queries::LogicQuery;
-
 /// An enum that represents all possible commands that can be received from the
 /// AwgenScript engine.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "command", rename_all = "snake_case")]
+#[serde(tag = "command", rename_all = "camelCase")]
 pub enum LogicCommands {
-    /// A command that is used to query the engine for information.
-    Query {
-        /// The query to be made.
-        query: LogicQuery,
-    },
-
-    /// A command that is used to update the project settings.
-    SetProjectSettings {
+    /// A command that is used to update the project name.
+    SetProjectName {
         /// The new name of the project.
         name: String,
+    },
 
+    /// A command that is used to update the project version.
+    SetProjectVersion {
         /// The new version of the project.
         version: String,
     },
