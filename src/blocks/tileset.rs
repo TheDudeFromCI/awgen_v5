@@ -146,3 +146,13 @@ fn load_tileset(
         ..default()
     });
 }
+
+/// A struct that represents a tileset definition.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TilesetDefinition {
+    /// The UUID of the tileset.
+    pub uuid: Uuid,
+
+    /// The name of the tileset.
+    pub name: String,
+}

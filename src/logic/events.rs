@@ -3,6 +3,8 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::blocks::tileset::TilesetDefinition;
+
 /// An enum that represents all possible events that can be sent to the
 /// AwgenScript engine.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -16,6 +18,9 @@ pub enum LogicEvent {
 
         /// The version of the project.
         project_version: String,
+
+        /// A list of all the tilesets in the project.
+        tilesets: Vec<TilesetDefinition>,
     },
 }
 

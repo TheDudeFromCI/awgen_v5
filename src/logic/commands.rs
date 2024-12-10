@@ -4,6 +4,7 @@
 use bevy::log::error;
 use boa_engine::{Context, JsValue};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 /// An enum that represents all possible commands that can be received from the
 /// AwgenScript engine.
@@ -21,6 +22,15 @@ pub enum LogicCommands {
         /// The new version of the project.
         version: String,
     },
+
+    /// A command that is used to edit a tileset.
+    EditTileset {
+        /// The uuid of the tileset to modify.
+        uuid: Uuid,
+
+        /// The action to take on the tileset.
+        action: EditTilesetAction,
+    },
 }
 
 impl LogicCommands {
@@ -36,4 +46,24 @@ impl LogicCommands {
             }
         }
     }
+}
+
+/// An enum that represents all possible actions that can be taken on a tileset.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "action", rename_all = "camelCase")]
+pub enum EditTilesetAction {
+    /// Creates a new tileset with the given properties.
+    Create {
+        /// The name of the new tileset.
+        name: String,
+    },
+
+    /// Updates the properties of the tileset.
+    Update {
+        /// The new name of the tileset.
+        name: String,
+    },
+
+    /// Deletes the tileset.
+    Delete,
 }

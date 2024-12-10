@@ -17,6 +17,8 @@ use super::events::LogicEvent;
 use super::queue::{ScriptEngineJobQueue, ScriptEngineShutdown};
 use super::resources::AwgenScriptChannels;
 use super::{LogicPluginSettings, api};
+use crate::blocks::tileset::TilesetDefinition;
+use crate::logic::commands::EditTilesetAction;
 use crate::settings::ProjectSettings;
 use crate::{PROJECT_NAME_DEFAULT, PROJECT_NAME_KEY, PROJECT_VERSION_DEFAULT, PROJECT_VERSION_KEY};
 
@@ -29,13 +31,36 @@ pub fn handle_logic_outputs(
         match output {
             LogicCommands::SetProjectName { name } => {
                 info!("Updating project name: {}", name);
-                project_settings.set(PROJECT_NAME_KEY, &name).unwrap();
+                project_settings.set(PROJECT_NAME_KEY, Some(&name)).unwrap();
             }
 
             LogicCommands::SetProjectVersion { version } => {
                 info!("Updating project version: {}", version);
-                project_settings.set(PROJECT_VERSION_KEY, &version).unwrap();
+                project_settings
+                    .set(PROJECT_VERSION_KEY, Some(&version))
+                    .unwrap();
             }
+
+            LogicCommands::EditTileset { uuid, action } => match action {
+                EditTilesetAction::Create { name } => {
+                    info!("Creating new tileset {}", uuid);
+                    debug!("Name: {}", name);
+
+                    let definition = TilesetDefinition { uuid, name };
+                    project_settings.update_tileset(&definition).unwrap();
+                }
+                EditTilesetAction::Update { name } => {
+                    info!("Updating tileset {}", uuid);
+                    debug!("New name: {}", name);
+
+                    let definition = TilesetDefinition { uuid, name };
+                    project_settings.update_tileset(&definition).unwrap();
+                }
+                EditTilesetAction::Delete => {
+                    info!("Deleting tileset {}", uuid);
+                    project_settings.remove_tileset(&uuid).unwrap();
+                }
+            },
         }
     }
 }
@@ -103,6 +128,7 @@ fn begin_loop(
             .get(PROJECT_VERSION_KEY)
             .unwrap()
             .unwrap_or_else(|| PROJECT_VERSION_DEFAULT.to_string()),
+        tilesets: project_settings.list_tilesets().unwrap(),
     });
 }
 
@@ -127,6 +153,7 @@ pub fn exec_engine(path: PathBuf, shutdown: ScriptEngineShutdown) {
     let c = &mut context;
     register(c, "print", 1, NativeFunction::from_fn_ptr(api::print));
     register(c, "sleep", 1, NativeFunction::from_async_fn(api::sleep));
+    register(c, "UUID", 0, NativeFunction::from_fn_ptr(api::uuid));
     register(c, "EVENT", 0, NativeFunction::from_async_fn(api::event));
     register(c, "COMMAND", 1, NativeFunction::from_fn_ptr(api::command));
 

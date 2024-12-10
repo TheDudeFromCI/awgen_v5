@@ -68,3 +68,9 @@ pub fn print(_this: &JsValue, args: &[JsValue], context: &mut Context) -> JsResu
     info!("[AWGEN SCRIPT] {}", message.to_std_string_escaped());
     Ok(JsValue::undefined())
 }
+
+/// Generates a random UUID.
+pub fn uuid(_this: &JsValue, _args: &[JsValue], _context: &mut Context) -> JsResult<JsValue> {
+    let uuid = uuid::Uuid::new_v4().to_string().into();
+    Ok(JsValue::String(uuid))
+}

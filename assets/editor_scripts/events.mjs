@@ -16,19 +16,19 @@ export class EventHandler {
    * @param {any} args The arguments to pass to the event handler.
    * @returns {Promise<void>}
    */
-  async emit(event, args) {
+  async emit(event, ...args) {
     let wasEmitting = this.#isEmitting;
     this.#isEmitting = true;
 
     if (this.#onHandlers[event]) {
       for (const handler of this.#onHandlers[event]) {
-        await handler(args);
+        await handler(...args);
       }
     }
 
     if (this.#onceHandlers[event]) {
       for (const handler of this.#onceHandlers[event]) {
-        await handler(args);
+        await handler(...args);
       }
       this.#onceHandlers[event] = undefined;
     }
@@ -109,7 +109,7 @@ export class EventHandler {
    */
   async waitFor(event) {
     return await new Promise((resolve) => {
-      this.once(event, resolve);
+      this.once(event, (...args) => resolve(args));
     });
   }
 

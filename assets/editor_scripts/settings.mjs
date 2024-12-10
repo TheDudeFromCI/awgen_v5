@@ -1,9 +1,12 @@
+import {EventHandler} from "./event_handler.mjs";
+
 /**
  * A small class to manage the project settings.
  */
-export class ProjectSettings {
+export class ProjectSettings extends EventHandler {
   #projectName = null;
   #projectVersion = null;
+  #tilesets = [];
 
   /**
    * This constructor initializes the project settings with the given game API.
@@ -12,26 +15,39 @@ export class ProjectSettings {
    * @param {GameAPI} api The game API to use for communication with the engine.
    */
   constructor(api) {
-    api.once("engineStarted", (response) => {
-      this.#projectName = response.projectName;
-      this.#projectVersion = response.projectVersion;
+    api.once("engineStarted", (event) => {
+      this.#projectName = event.projectName;
+      this.#projectVersion = event.projectVersion;
+
+      for (let tileset of event.tilesets) {
+        let t = new Tileset(tileset.uuid, tileset.name);
+        this.#tilesets.push(t);
+      }
     });
   }
 
   /**
-   * This function returns the name of the project.
+   * Gets the name of the project.
    * @returns {string} The name of the project.
    */
-  getName() {
+  get name() {
     return this.#projectName;
   }
 
   /**
-   * This function returns the version of the project.
+   * Gets the version of the project.
    * @returns {string} The version of the project.
    */
-  getVersion() {
+  get version() {
     return this.#projectVersion;
+  }
+
+  /**
+   * Gets the tilesets in the project.
+   * @returns {Tileset[]} The tilesets in the project.
+   */
+  get tilesets() {
+    return this.#tilesets;
   }
 
   /**
@@ -39,12 +55,14 @@ export class ProjectSettings {
    * the project settings in the engine.
    * @param {string} name The name of the project.
    */
-  setName(name) {
+  async setName(name) {
+    let oldName = this.#projectName;
     this.#projectName = name;
     COMMAND({
       command: "setProjectName",
       name: this.#projectName,
     });
+    await this.emit("projectNameChanged", this.#projectName, oldName);
   }
 
   /**
@@ -52,11 +70,13 @@ export class ProjectSettings {
    * update the project settings in the engine.
    * @param {string} version The version of the project.
    */
-  setVersion(version) {
+  async setVersion(version) {
+    let oldVersion = this.#projectVersion;
     this.#projectVersion = version;
     COMMAND({
       command: "setProjectVersion",
       version: this.#projectVersion,
     });
+    await this.emit("projectVersionChanged", this.#projectVersion, oldVersion);
   }
 }

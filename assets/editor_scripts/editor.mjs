@@ -24,9 +24,10 @@ export class EditorAPI extends EventHandler {
   async run() {
     while (true) {
       let message = JSON.parse(await EVENT());
-
-      if (message.event === "engineStarted") {
-        this.emit("engine_started");
+      switch (message.event) {
+        case "engineStarted":
+          this.emit("engineStarted");
+          break;
       }
     }
   }
